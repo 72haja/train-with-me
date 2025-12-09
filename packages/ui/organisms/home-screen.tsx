@@ -3,6 +3,7 @@
 import { motion } from "motion/react"
 import { Train, Users, MapPin } from "lucide-react"
 import { RouteSearchForm } from "@/packages/ui/molecules/route-search-form"
+import { UserMenu } from "@/packages/ui/molecules/user-menu"
 import styles from './home-screen.module.scss'
 
 interface HomeScreenProps {
@@ -26,6 +27,9 @@ export function HomeScreen({ onNavigateToSelection, onSearchRoute, searchLoading
           </div>
           <h1 className={styles.logoText}>VVS Together</h1>
         </motion.div>
+        <div className={styles.userMenu}>
+          <UserMenu />
+        </div>
       </header>
 
       <main className={styles.main}>

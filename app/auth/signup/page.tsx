@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Train, Mail, Lock, User } from 'lucide-react';
+import { Train, Mail, User } from 'lucide-react';
 import { Button } from '@/packages/ui/atoms/button';
+import { PasswordInput } from '@/packages/ui/molecules/password-input';
 import { signUp } from '@/app/actions/auth';
 import styles from '@/packages/ui/organisms/auth-screen.module.scss';
 
@@ -103,20 +104,16 @@ export default function SignUpPage() {
                     </div>
 
                     <div className={styles.field}>
-                        <label htmlFor="password" className={styles.label}>
-                            <Lock className={styles.labelIcon} />
-                            Password
-                        </label>
-                        <input
+                        <PasswordInput
                             id="password"
                             name="password"
-                            type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className={styles.input}
+                            onChange={setPassword}
                             placeholder="••••••••"
+                            label="Password"
                             required
-                            minLength={6}
+                            minLength={8}
+                            showStrength={true}
                         />
                     </div>
 

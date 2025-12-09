@@ -8,12 +8,19 @@
 
 .header {
   padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+}
+
+.userMenu {
+  flex-shrink: 0;
 }
 
 .logoIcon {

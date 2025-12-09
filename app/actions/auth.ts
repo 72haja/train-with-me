@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getSupabaseClient } from "@apis/supabase/client";
+import { getServerSupabaseClient } from "@apis/supabase/server";
 
 export async function signIn(formData: FormData) {
-    const supabase = getSupabaseClient();
+    const supabase = await getServerSupabaseClient();
 
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -16,15 +16,15 @@ export async function signIn(formData: FormData) {
     });
 
     if (error) {
-        redirect(`/auth/signin?error=${encodeURIComponent(error.message)}`);
+        return { error: error.message };
     }
 
     revalidatePath("/", "layout");
-    redirect("/");
+    return { success: true };
 }
 
 export async function signUp(formData: FormData) {
-    const supabase = getSupabaseClient();
+    const supabase = await getServerSupabaseClient();
 
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -49,7 +49,7 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signOut() {
-    const supabase = getSupabaseClient();
+    const supabase = await getServerSupabaseClient();
 
     await supabase.auth.signOut();
 

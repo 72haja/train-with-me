@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'motion/react';
-import { Train, Mail, Lock } from 'lucide-react';
-import { Button } from '@/packages/ui/atoms/button';
-import { signIn } from '@/app/actions/auth';
-import styles from '@/packages/ui/organisms/auth-screen.module.scss';
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Lock, Mail, Train } from "lucide-react";
+import { motion } from "motion/react";
+import { signIn } from "@/app/actions/auth";
+import { Button } from "@ui/atoms/button";
+import styles from "@ui/organisms/auth-screen.module.scss";
 
 export default function SignInPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const errorParam = searchParams.get('error');
+        const errorParam = searchParams.get("error");
         if (errorParam) {
             setError(decodeURIComponent(errorParam));
         }
@@ -29,13 +29,25 @@ export default function SignInPage() {
         setError(null);
 
         const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
+        formData.append("email", email);
+        formData.append("password", password);
 
         try {
-            await signIn(formData);
+            const result = await signIn(formData);
+
+            if (result?.error) {
+                setError(result.error);
+                setLoading(false);
+                return;
+            }
+
+            // Success - redirect to home page
+            console.log("// Success - redirect to home page");
+            router.push("/");
+            // router.refresh();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Sign in failed');
+            // Handle unexpected errors
+            setError(err instanceof Error ? err.message : "Sign in failed");
             setLoading(false);
         }
     };
@@ -46,17 +58,14 @@ export default function SignInPage() {
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={styles.header}
-                >
+                    className={styles.header}>
                     <div className={styles.logo}>
                         <div className={styles.logoIcon}>
                             <Train className={styles.logoIconSvg} />
                         </div>
                         <h1 className={styles.logoText}>VVS Together</h1>
                     </div>
-                    <p className={styles.subtitle}>
-                        Sign in to coordinate with friends
-                    </p>
+                    <p className={styles.subtitle}>Sign in to coordinate with friends</p>
                 </motion.div>
 
                 <motion.form
@@ -64,8 +73,7 @@ export default function SignInPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     onSubmit={handleSubmit}
-                    className={styles.form}
-                >
+                    className={styles.form}>
                     <div className={styles.field}>
                         <label htmlFor="email" className={styles.label}>
                             <Mail className={styles.labelIcon} />
@@ -76,7 +84,7 @@ export default function SignInPage() {
                             name="email"
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={e => setEmail(e.target.value)}
                             className={styles.input}
                             placeholder="anna@example.com"
                             required
@@ -93,7 +101,7 @@ export default function SignInPage() {
                             name="password"
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={e => setPassword(e.target.value)}
                             className={styles.input}
                             placeholder="••••••••"
                             required
@@ -101,28 +109,17 @@ export default function SignInPage() {
                         />
                     </div>
 
-                    {error && (
-                        <div className={styles.error}>
-                            {error}
-                        </div>
-                    )}
+                    {error && <div className={styles.error}>{error}</div>}
 
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="lg"
-                        fullWidth
-                        loading={loading}
-                    >
+                    <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
                         Sign In
                     </Button>
 
                     <button
                         type="button"
-                        onClick={() => router.push('/auth/signup')}
-                        className={styles.toggleButton}
-                    >
-                        Don't have an account? Sign up
+                        onClick={() => router.push("/auth/signup")}
+                        className={styles.toggleButton}>
+                        Do not have an account? Sign up
                     </button>
                 </motion.form>
 
@@ -130,8 +127,7 @@ export default function SignInPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    className={styles.footer}
-                >
+                    className={styles.footer}>
                     <p className={styles.footerText}>
                         VVS Together is for private friend groups only.
                         <br />
@@ -142,4 +138,3 @@ export default function SignInPage() {
         </div>
     );
 }
-

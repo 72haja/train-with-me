@@ -1,0 +1,302 @@
+.container {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--color-background);
+    padding-bottom: var(--spacing-lg);
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-md) var(--spacing-lg);
+    z-index: 10;
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.backButton {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+
+    &:hover {
+        background-color: var(--color-border-light);
+    }
+}
+
+.backButtonIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-primary);
+}
+
+.headerTitle {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xl);
+}
+
+.main {
+    padding: var(--spacing-lg);
+    max-width: 32rem;
+    margin: 0 auto;
+}
+
+.alert {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid;
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+}
+
+.section {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-lg);
+}
+
+.sectionTitle {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-lg);
+}
+
+.addFriendForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.field {
+    margin-bottom: var(--spacing-md);
+}
+
+.label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.labelIcon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.buttonIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.requestsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.requestCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background-color: var(--color-background);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+.requestUser {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+    min-width: 0;
+}
+
+.requestAvatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: var(--color-border);
+    flex-shrink: 0;
+}
+
+.requestAvatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.requestAvatarPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-accent);
+    color: var(--color-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+}
+
+.requestInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.requestName {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.125rem;
+}
+
+.requestEmail {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.requestActions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.acceptButton,
+.declineButton {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.acceptButton {
+    background-color: var(--color-success);
+    color: white;
+
+    &:hover {
+        background-color: #007a4d;
+    }
+}
+
+.declineButton {
+    background-color: var(--color-error);
+    color: white;
+
+    &:hover {
+        background-color: #b01e18;
+    }
+}
+
+.actionIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.requestStatus {
+    display: flex;
+    align-items: center;
+}
+
+.pendingBadge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.friendsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.friendItem {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.removeButton {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-md);
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+
+    &:hover {
+        background-color: rgba(220, 40, 30, 0.1);
+        border-color: var(--color-error);
+    }
+}
+
+.removeIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-secondary);
+
+    .removeButton:hover & {
+        color: var(--color-error);
+    }
+}
+
+.loading {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-text-secondary);
+}
+
+.emptyState {
+    text-align: center;
+    padding: var(--spacing-xl);
+}
+
+.emptyText {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--spacing-xs);
+}
+
+.emptySubtext {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
