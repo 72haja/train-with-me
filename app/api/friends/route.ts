@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseClient } from "@apis/supabase/client";
+import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
  * GET /api/friends
  * Get current user's friends
  */
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
-        const supabase = getSupabaseClient();
+        const supabase = createServerSupabaseClient(request);
 
         // Get current user from session
         const {

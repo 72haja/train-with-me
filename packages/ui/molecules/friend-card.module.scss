@@ -5,6 +5,7 @@
   padding: var(--spacing-md);
   border-radius: var(--radius-xl);
   transition: background-color var(--transition-fast);
+  width: 100%;
 
   &:hover {
     background-color: var(--color-background);

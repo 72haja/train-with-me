@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Check, Mail, Trash2, UserPlus, X } from "lucide-react";
 import { motion } from "motion/react";
-import { ArrowLeft, UserPlus, Check, X, Trash2, Mail } from "lucide-react";
 import { Button } from "@ui/atoms/button";
 import { Input } from "@ui/atoms/input";
 import { FriendCard } from "@ui/molecules/friend-card";
-import Image from "next/image";
 import styles from "./page.module.scss";
 
 interface Friend {
@@ -47,6 +47,18 @@ export default function FriendsPage() {
         loadRequests();
     }, []);
 
+    // Auto-dismiss alerts after 10 seconds
+    useEffect(() => {
+        if (error || success) {
+            const timer = setTimeout(() => {
+                setError(null);
+                setSuccess(null);
+            }, 10000); // 10 seconds
+
+            return () => clearTimeout(timer);
+        }
+    }, [error, success]);
+
     const loadFriends = async () => {
         try {
             const response = await fetch("/api/friends");
@@ -75,11 +87,32 @@ export default function FriendsPage() {
         }
     };
 
+    const validateEmail = (email: string): string | null => {
+        if (!email || email.trim() === "") {
+            return "Email address is required";
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            return "Please enter a valid email address";
+        }
+
+        return null;
+    };
+
     const handleSendRequest = async (e: React.FormEvent) => {
         e.preventDefault();
-        setRequestLoading(true);
         setError(null);
         setSuccess(null);
+
+        // Validate email before submitting
+        const emailError = validateEmail(email);
+        if (emailError) {
+            setError(emailError);
+            return;
+        }
+
+        setRequestLoading(true);
 
         try {
             const response = await fetch("/api/friends/request", {
@@ -87,7 +120,7 @@ export default function FriendsPage() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email: email.trim() }),
             });
 
             const data = await response.json();
@@ -99,7 +132,7 @@ export default function FriendsPage() {
             } else {
                 setError(data.error || "Failed to send friend request");
             }
-        } catch (err) {
+        } catch {
             setError("Failed to send friend request");
         } finally {
             setRequestLoading(false);
@@ -119,7 +152,7 @@ export default function FriendsPage() {
             } else {
                 setError("Failed to accept friend request");
             }
-        } catch (err) {
+        } catch {
             setError("Failed to accept friend request");
         }
     };
@@ -136,7 +169,7 @@ export default function FriendsPage() {
             } else {
                 setError("Failed to decline friend request");
             }
-        } catch (err) {
+        } catch {
             setError("Failed to decline friend request");
         }
     };
@@ -157,7 +190,7 @@ export default function FriendsPage() {
             } else {
                 setError("Failed to remove friend");
             }
-        } catch (err) {
+        } catch {
             setError("Failed to remove friend");
         }
     };
@@ -165,7 +198,7 @@ export default function FriendsPage() {
     const getInitials = (name: string) => {
         return name
             .split(" ")
-            .map((n) => n[0])
+            .map(n => n[0])
             .join("")
             .toUpperCase()
             .substring(0, 2);
@@ -178,8 +211,7 @@ export default function FriendsPage() {
                     <button
                         onClick={() => router.back()}
                         className={styles.backButton}
-                        aria-label="Go back"
-                    >
+                        aria-label="Go back">
                         <ArrowLeft className={styles.backButtonIcon} />
                     </button>
                     <h1 className={styles.headerTitle}>Friends</h1>
@@ -196,9 +228,13 @@ export default function FriendsPage() {
                             backgroundColor: "rgba(220, 40, 30, 0.1)",
                             borderColor: "rgba(220, 40, 30, 0.2)",
                             color: "var(--color-error)",
-                        }}
-                    >
+                        }}>
                         {error}
+                        <button
+                            onClick={() => setError(null)}
+                            className={styles.closeInfoBoxButton}>
+                            <X />
+                        </button>
                     </motion.div>
                 )}
 
@@ -211,8 +247,7 @@ export default function FriendsPage() {
                             backgroundColor: "rgba(0, 152, 95, 0.1)",
                             borderColor: "rgba(0, 152, 95, 0.2)",
                             color: "var(--color-success)",
-                        }}
-                    >
+                        }}>
                         {success}
                     </motion.div>
                 )}
@@ -221,10 +256,9 @@ export default function FriendsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={styles.section}
-                >
+                    className={styles.section}>
                     <h2 className={styles.sectionTitle}>Add Friend</h2>
-                    <form onSubmit={handleSendRequest} className={styles.addFriendForm}>
+                    <form onSubmit={handleSendRequest} className={styles.addFriendForm} noValidate>
                         <div className={styles.field}>
                             <label htmlFor="email" className={styles.label}>
                                 <Mail className={styles.labelIcon} />
@@ -234,9 +268,14 @@ export default function FriendsPage() {
                                 id="email"
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={e => {
+                                    setEmail(e.target.value);
+                                    // Clear error when user starts typing
+                                    if (error) {
+                                        setError(null);
+                                    }
+                                }}
                                 placeholder="friend@example.com"
-                                required
                             />
                         </div>
                         <Button
@@ -244,8 +283,7 @@ export default function FriendsPage() {
                             variant="primary"
                             size="md"
                             fullWidth
-                            loading={requestLoading}
-                        >
+                            loading={requestLoading}>
                             <UserPlus className={styles.buttonIcon} />
                             Send Friend Request
                         </Button>
@@ -258,13 +296,12 @@ export default function FriendsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className={styles.section}
-                    >
+                        className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             Friend Requests ({requests.received.length})
                         </h2>
                         <div className={styles.requestsList}>
-                            {requests.received.map((request) => (
+                            {requests.received.map(request => (
                                 <div key={request.id} className={styles.requestCard}>
                                     <div className={styles.requestUser}>
                                         <div className={styles.requestAvatar}>
@@ -296,16 +333,14 @@ export default function FriendsPage() {
                                             type="button"
                                             onClick={() => handleAccept(request.id)}
                                             className={styles.acceptButton}
-                                            aria-label="Accept"
-                                        >
+                                            aria-label="Accept">
                                             <Check className={styles.actionIcon} />
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleDecline(request.id)}
                                             className={styles.declineButton}
-                                            aria-label="Decline"
-                                        >
+                                            aria-label="Decline">
                                             <X className={styles.actionIcon} />
                                         </button>
                                     </div>
@@ -321,13 +356,12 @@ export default function FriendsPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className={styles.section}
-                    >
+                        className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             Sent Requests ({requests.sent.length})
                         </h2>
                         <div className={styles.requestsList}>
-                            {requests.sent.map((request) => (
+                            {requests.sent.map(request => (
                                 <div key={request.id} className={styles.requestCard}>
                                     <div className={styles.requestUser}>
                                         <div className={styles.requestAvatar}>
@@ -368,11 +402,8 @@ export default function FriendsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className={styles.section}
-                >
-                    <h2 className={styles.sectionTitle}>
-                        My Friends ({friends.length})
-                    </h2>
+                    className={styles.section}>
+                    <h2 className={styles.sectionTitle}>My Friends ({friends.length})</h2>
                     {loading ? (
                         <div className={styles.loading}>Loading...</div>
                     ) : friends.length === 0 ? (
@@ -384,7 +415,7 @@ export default function FriendsPage() {
                         </div>
                     ) : (
                         <div className={styles.friendsList}>
-                            {friends.map((friend) => (
+                            {friends.map(friend => (
                                 <div key={friend.id} className={styles.friendItem}>
                                     <FriendCard
                                         friend={{
@@ -398,8 +429,7 @@ export default function FriendsPage() {
                                         type="button"
                                         onClick={() => handleRemove(friend.friendshipId)}
                                         className={styles.removeButton}
-                                        aria-label="Remove friend"
-                                    >
+                                        aria-label="Remove friend">
                                         <Trash2 className={styles.removeIcon} />
                                     </button>
                                 </div>
@@ -411,4 +441,3 @@ export default function FriendsPage() {
         </div>
     );
 }
-

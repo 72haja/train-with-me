@@ -36,9 +36,21 @@ export default function SignUpPage() {
         formData.append('fullName', fullName);
 
         try {
-            await signUp(formData);
+            const result = await signUp(formData);
+
+            if (result?.error) {
+                setError(result.error);
+                setLoading(false);
+                return;
+            }
+
+            // Success - session is stored in cookies by server action
+            // Redirect to home page
+            router.push("/");
+            router.refresh();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Sign up failed');
+            // Handle unexpected errors
+            setError(err instanceof Error ? err.message : "Sign up failed");
             setLoading(false);
         }
     };

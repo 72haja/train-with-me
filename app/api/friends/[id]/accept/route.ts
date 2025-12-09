@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseClient } from "@apis/supabase/client";
+import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
  * POST /api/friends/[id]/accept
@@ -7,10 +7,10 @@ import { getSupabaseClient } from "@apis/supabase/client";
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const supabase = getSupabaseClient();
+        const supabase = createServerSupabaseClient(request);
 
         const {
             data: { user },
@@ -21,7 +21,8 @@ export async function POST(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const friendshipId = params.id;
+        const { id } = await params;
+        const friendshipId = id;
 
         // Verify the friendship exists and user is the recipient
         const { data: friendship, error: fetchError } = await supabase

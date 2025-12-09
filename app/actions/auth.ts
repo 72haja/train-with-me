@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { getServerSupabaseClient } from "@apis/supabase/server";
 
 export async function signIn(formData: FormData) {
@@ -41,18 +40,22 @@ export async function signUp(formData: FormData) {
     });
 
     if (error) {
-        redirect(`/auth/signup?error=${encodeURIComponent(error.message)}`);
+        return { error: error.message };
     }
 
     revalidatePath("/", "layout");
-    redirect("/");
+    return { success: true };
 }
 
 export async function signOut() {
     const supabase = await getServerSupabaseClient();
 
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+        return { error: error.message };
+    }
 
     revalidatePath("/", "layout");
-    redirect("/auth/signin");
+    return { success: true };
 }

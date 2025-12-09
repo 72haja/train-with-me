@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import type { Connection } from "@/types/vvs";
-import { useAuth } from "@apis/hooks/useAuth";
+import { useSession } from "@apis/hooks/useSession";
 import { searchConnections } from "@apis/mockConnections";
 import { mockConnections } from "@apis/mockData";
 import { LoadingSpinner } from "@ui/atoms/loading-spinner";
@@ -16,7 +16,7 @@ type Screen = "home" | "selection" | "details";
 
 export default function App() {
     const router = useRouter();
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useSession();
     const [currentScreen, setCurrentScreen] = useState<Screen>("home");
     const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
     const [userConnectionId, setUserConnectionId] = useState<string | null>(null);

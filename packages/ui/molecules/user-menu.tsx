@@ -5,12 +5,14 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, User, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useAuth } from "@apis/hooks/useAuth";
+import { useSession } from "@apis/hooks/useSession";
+import { getSupabaseClient } from "@apis/supabase/client";
+import { signOut as signOutAction } from "@/app/actions/auth";
 import styles from "./user-menu.module.scss";
 
 export function UserMenu() {
     const router = useRouter();
-    const { user, signOut } = useAuth();
+    const { user } = useSession();
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -26,8 +28,18 @@ export function UserMenu() {
     }, []);
 
     const handleSignOut = async () => {
-        await signOut();
-        router.push("/auth/signin");
+        try {
+            await signOutAction();
+            router.push("/auth/signin");
+            router.refresh();
+        } catch (error) {
+            console.error("Sign out error:", error);
+            // Fallback: sign out client-side
+            const supabase = getSupabaseClient();
+            await supabase.auth.signOut();
+            router.push("/auth/signin");
+            router.refresh();
+        }
     };
 
     const handleProfileClick = () => {

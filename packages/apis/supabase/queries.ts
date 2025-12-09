@@ -13,18 +13,27 @@ import { getSupabaseClient } from "./client";
 export async function getFriends(userId: string): Promise<Friend[]> {
     const supabaseClient = getSupabaseClient();
 
+    // Get accepted friendships where user is either requester or recipient
     const { data, error } = await supabaseClient
         .from("friendships")
         .select(
             `
-      friend:profiles!friend_id (
-        id,
-        full_name,
-        avatar_url
-      )
-    `
+            id,
+            user_id,
+            friend_id,
+            friend:profiles!friend_id (
+                id,
+                full_name,
+                avatar_url
+            ),
+            requester:profiles!user_id (
+                id,
+                full_name,
+                avatar_url
+            )
+            `
         )
-        .eq("user_id", userId)
+        .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
         .eq("status", "accepted");
 
     if (error) {
@@ -32,15 +41,22 @@ export async function getFriends(userId: string): Promise<Friend[]> {
         return [];
     }
 
-    // Transform to Friend type
+    // Transform to Friend type - get the other user in each friendship
     return (data || [])
-        .flatMap(item => item.friend)
-        .map(item => ({
-            id: item.id,
-            name: item.full_name,
-            avatarUrl: item.avatar_url,
-            isOnline: false, // Would be determined by Supabase presence
-        }));
+        .map(friendship => {
+            const friend =
+                friendship.user_id === userId
+                    ? (friendship.friend?.[0] ?? null)
+                    : (friendship.requester?.[0] ?? null);
+
+            return {
+                id: friend?.id || "",
+                name: friend?.full_name || "Unknown",
+                avatarUrl: friend?.avatar_url || undefined,
+                isOnline: false, // Would be determined by Supabase presence
+            };
+        })
+        .filter((friend: Friend) => friend.id !== ""); // Filter out invalid entries
 }
 
 /**

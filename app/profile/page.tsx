@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowLeft, User, Mail, Upload, X } from "lucide-react";
-import { useAuth } from "@apis/hooks/useAuth";
+import { useSession } from "@apis/hooks/useSession";
 import { getSupabaseClient } from "@apis/supabase/client";
 import { Button } from "@ui/atoms/button";
 import { Input } from "@ui/atoms/input";
@@ -16,7 +16,7 @@ import styles from "./page.module.scss";
 export default function ProfilePage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user } = useAuth();
+    const { user } = useSession();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);

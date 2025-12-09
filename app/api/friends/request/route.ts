@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseClient } from "@apis/supabase/client";
+import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
  * POST /api/friends/request
@@ -7,7 +7,7 @@ import { getSupabaseClient } from "@apis/supabase/client";
  */
 export async function POST(request: NextRequest) {
     try {
-        const supabase = getSupabaseClient();
+        const supabase = createServerSupabaseClient(request);
 
         // Get current user from session
         const {

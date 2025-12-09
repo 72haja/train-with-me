@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseClient } from "@apis/supabase/client";
+import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
  * GET /api/friends/requests
  * Get pending friend requests (both sent and received)
  */
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
-        const supabase = getSupabaseClient();
+        const supabase = createServerSupabaseClient(request);
 
         const {
             data: { user },
