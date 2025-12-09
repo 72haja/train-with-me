@@ -1,0 +1,74 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-xl);
+  transition: background-color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--color-background);
+  }
+}
+
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--color-border);
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.onlineIndicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  background-color: var(--color-success);
+  border-radius: 50%;
+  border: 2px solid var(--color-surface);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  margin-top: 0.125rem;
+}
+

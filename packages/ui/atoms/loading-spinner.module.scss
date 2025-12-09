@@ -1,0 +1,40 @@
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle {
+  border-radius: 50%;
+  border-style: solid;
+  border-color: currentColor currentColor transparent transparent;
+  animation: spin 0.6s linear infinite;
+}
+
+.sm .circle {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.md .circle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 2px;
+}
+
+.lg .circle {
+  width: 2rem;
+  height: 2rem;
+  border-width: 3px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
