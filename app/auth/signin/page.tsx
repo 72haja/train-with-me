@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Mail, Train } from "lucide-react";
 import { motion } from "motion/react";
-import { signIn } from "@/app/actions/auth";
+import { useAuth } from "@apis/hooks/useAuth";
 import { Button } from "@ui/atoms/button";
 import styles from "@ui/organisms/auth-screen.module.scss";
 
 export default function SignInPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { signIn: signInWithAuth } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -28,25 +29,14 @@ export default function SignInPage() {
         setLoading(true);
         setError(null);
 
-        const formData = new FormData();
-        formData.append("email", email);
-        formData.append("password", password);
-
         try {
-            const result = await signIn(formData);
-
-            if (result?.error) {
-                setError(result.error);
-                setLoading(false);
-                return;
-            }
-
-            // Success - redirect to home page
-            console.log("// Success - redirect to home page");
+            await signInWithAuth(email, password);
+            // Success - the useAuth hook handles the session automatically
+            // Redirect to home page
             router.push("/");
-            // router.refresh();
+            router.refresh();
         } catch (err) {
-            // Handle unexpected errors
+            // Handle errors from the auth hook
             setError(err instanceof Error ? err.message : "Sign in failed");
             setLoading(false);
         }

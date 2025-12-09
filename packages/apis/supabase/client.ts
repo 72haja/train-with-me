@@ -1,26 +1,19 @@
 /**
  * Supabase Client Configuration
  *
- * This is a conceptual setup for the VVS Together application.
- * In production, this would connect to a real Supabase instance.
+ * This client is used in browser/client components.
+ * It uses createBrowserClient from @supabase/ssr to read cookies
+ * set by server actions, ensuring the client and server share the same session.
  */
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-// Create Supabase client
+// Create Supabase client for browser/client-side usage
+// This client automatically reads from cookies (set by server actions)
+// and syncs with localStorage for offline support
 export const getSupabaseClient = () => {
     // Environment variables (set in .env.local)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-    return createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-        },
-        realtime: {
-            params: {
-                eventsPerSecond: 10,
-            },
-        },
-    });
+    return createBrowserClient(supabaseUrl, supabaseAnonKey);
 };
