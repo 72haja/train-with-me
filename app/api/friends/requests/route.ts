@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Transform received requests
-        const received = (receivedRequests || []).map((request: any) => {
+        const received = (receivedRequests || []).map(request => {
             const requester = Array.isArray(request.requester)
                 ? request.requester[0]
                 : request.requester;
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
         });
 
         // Transform sent requests
-        const sent = (sentRequests || []).map((request: any) => {
+        const sent = (sentRequests || []).map(request => {
             const recipient = Array.isArray(request.recipient)
                 ? request.recipient[0]
                 : request.recipient;
@@ -113,12 +113,8 @@ export async function GET(request: NextRequest) {
         });
     } catch (error) {
         console.error("Error in GET /api/friends/requests:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
 export const dynamic = "force-dynamic";
-

@@ -5,10 +5,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * DELETE /api/friends/[id]
  * Remove a friend (delete friendship)
  */
-export async function DELETE(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteContext<"/api/friends/[id]">) {
     try {
         const supabase = createServerSupabaseClient(request);
 
@@ -34,10 +31,7 @@ export async function DELETE(
             .single();
 
         if (fetchError || !friendship) {
-            return NextResponse.json(
-                { error: "Friendship not found" },
-                { status: 404 }
-            );
+            return NextResponse.json({ error: "Friendship not found" }, { status: 404 });
         }
 
         // Delete the friendship
@@ -48,10 +42,7 @@ export async function DELETE(
 
         if (deleteError) {
             console.error("Error removing friend:", deleteError);
-            return NextResponse.json(
-                { error: "Failed to remove friend" },
-                { status: 500 }
-            );
+            return NextResponse.json({ error: "Failed to remove friend" }, { status: 500 });
         }
 
         return NextResponse.json({
@@ -60,12 +51,8 @@ export async function DELETE(
         });
     } catch (error) {
         console.error("Error in DELETE /api/friends/[id]:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
 export const dynamic = "force-dynamic";
-

@@ -5,9 +5,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, User, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { signOut as signOutAction } from "@/app/actions/auth";
 import { useSession } from "@apis/hooks/useSession";
 import { getSupabaseClient } from "@apis/supabase/client";
-import { signOut as signOutAction } from "@/app/actions/auth";
 import styles from "./user-menu.module.scss";
 
 export function UserMenu() {
@@ -52,7 +52,11 @@ export function UserMenu() {
         router.push("/friends");
     };
 
-    const userInitials = user?.email?.split("@")[0].substring(0, 2).toUpperCase() || "U";
+    const userInitials = (() => {
+        if (!user?.email) return "U";
+        const emailPart = user.email.split("@")[0];
+        return emailPart ? emailPart.substring(0, 2).toUpperCase() : "U";
+    })();
 
     return (
         <div className={styles.menuContainer} ref={menuRef}>

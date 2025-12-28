@@ -1,25 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'motion/react';
-import { Train, Mail, User } from 'lucide-react';
-import { Button } from '@/packages/ui/atoms/button';
-import { PasswordInput } from '@/packages/ui/molecules/password-input';
-import { signUp } from '@/app/actions/auth';
-import styles from '@/packages/ui/organisms/auth-screen.module.scss';
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, User } from "lucide-react";
+import { motion } from "motion/react";
+import { signUp } from "@/app/actions/auth";
+import { Button } from "@ui/atoms/button";
+import { Alert } from "@ui/molecules/alert";
+import { AuthFooter } from "@ui/molecules/auth-footer";
+import { AuthFormField } from "@ui/molecules/auth-form-field";
+import { AuthHeader } from "@ui/molecules/auth-header";
+import { PasswordInput } from "@ui/molecules/password-input";
+import styles from "@ui/organisms/auth-screen.module.scss";
 
 export default function SignUpPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [fullName, setFullName] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const errorParam = searchParams.get('error');
+        const errorParam = searchParams.get("error");
         if (errorParam) {
             setError(decodeURIComponent(errorParam));
         }
@@ -31,9 +35,9 @@ export default function SignUpPage() {
         setError(null);
 
         const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
-        formData.append('fullName', fullName);
+        formData.append("email", email);
+        formData.append("password", password);
+        formData.append("fullName", fullName);
 
         try {
             const result = await signUp(formData);
@@ -58,62 +62,37 @@ export default function SignUpPage() {
     return (
         <div className={styles.container}>
             <div className={styles.content}>
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={styles.header}
-                >
-                    <div className={styles.logo}>
-                        <div className={styles.logoIcon}>
-                            <Train className={styles.logoIconSvg} />
-                        </div>
-                        <h1 className={styles.logoText}>VVS Together</h1>
-                    </div>
-                    <p className={styles.subtitle}>
-                        Create an account to get started
-                    </p>
-                </motion.div>
+                <AuthHeader subtitle="Create an account to get started" />
 
                 <motion.form
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     onSubmit={handleSubmit}
-                    className={styles.form}
-                >
-                    <div className={styles.field}>
-                        <label htmlFor="fullName" className={styles.label}>
-                            <User className={styles.labelIcon} />
-                            Full Name
-                        </label>
-                        <input
-                            id="fullName"
-                            name="fullName"
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className={styles.input}
-                            placeholder="Anna Schmidt"
-                            required
-                        />
-                    </div>
+                    className={styles.form}>
+                    <AuthFormField
+                        label="Full Name"
+                        labelIcon={<User className={styles.labelIcon} />}
+                        id="fullName"
+                        name="fullName"
+                        type="text"
+                        value={fullName}
+                        onChange={e => setFullName(e.target.value)}
+                        placeholder="Anna Schmidt"
+                        required
+                    />
 
-                    <div className={styles.field}>
-                        <label htmlFor="email" className={styles.label}>
-                            <Mail className={styles.labelIcon} />
-                            Email
-                        </label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className={styles.input}
-                            placeholder="anna@example.com"
-                            required
-                        />
-                    </div>
+                    <AuthFormField
+                        label="Email"
+                        labelIcon={<Mail className={styles.labelIcon} />}
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="anna@example.com"
+                        required
+                    />
 
                     <div className={styles.field}>
                         <PasswordInput
@@ -129,45 +108,22 @@ export default function SignUpPage() {
                         />
                     </div>
 
-                    {error && (
-                        <div className={styles.error}>
-                            {error}
-                        </div>
-                    )}
+                    {error && <Alert message={error} type="error" />}
 
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="lg"
-                        fullWidth
-                        loading={loading}
-                    >
+                    <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
                         Create Account
                     </Button>
 
                     <button
                         type="button"
-                        onClick={() => router.push('/auth/signin')}
-                        className={styles.toggleButton}
-                    >
+                        onClick={() => router.push("/auth/signin")}
+                        className={styles.toggleButton}>
                         Already have an account? Sign in
                     </button>
                 </motion.form>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className={styles.footer}
-                >
-                    <p className={styles.footerText}>
-                        VVS Together is for private friend groups only.
-                        <br />
-                        Not intended for collecting PII or securing sensitive data.
-                    </p>
-                </motion.div>
+                <AuthFooter />
             </div>
         </div>
     );
 }
-

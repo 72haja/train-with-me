@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "motion/react";
-import { ArrowLeft, User, Mail, Upload, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { updateEmail, updatePassword, updateProfile } from "@/app/actions/profile";
 import { useSession } from "@apis/hooks/useSession";
 import { getSupabaseClient } from "@apis/supabase/client";
-import { Button } from "@ui/atoms/button";
-import { Input } from "@ui/atoms/input";
-import { PasswordInput } from "@ui/molecules/password-input";
-import { updateEmail, updatePassword, updateProfile } from "@/app/actions/profile";
-import Image from "next/image";
+import { Alert } from "@ui/molecules/alert";
+import { AvatarUploadSection } from "@ui/molecules/avatar-upload-section";
+import { EmailFormSection } from "@ui/molecules/email-form-section";
+import { PasswordFormSection } from "@ui/molecules/password-form-section";
+import { ProfileFormSection } from "@ui/molecules/profile-form-section";
 import styles from "./page.module.scss";
 
 export default function ProfilePage() {
@@ -184,7 +184,7 @@ export default function ProfilePage() {
     const userInitials = fullName
         ? fullName
               .split(" ")
-              .map((n) => n[0])
+              .map(n => n[0])
               .join("")
               .toUpperCase()
               .substring(0, 2)
@@ -199,8 +199,7 @@ export default function ProfilePage() {
                     <button
                         onClick={() => router.back()}
                         className={styles.backButton}
-                        aria-label="Go back"
-                    >
+                        aria-label="Go back">
                         <ArrowLeft className={styles.backButtonIcon} />
                     </button>
                     <h1 className={styles.headerTitle}>Profile</h1>
@@ -208,185 +207,40 @@ export default function ProfilePage() {
             </header>
 
             <main className={styles.main}>
-                {error && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={styles.alert}
-                        style={{ backgroundColor: "rgba(220, 40, 30, 0.1)", borderColor: "rgba(220, 40, 30, 0.2)", color: "var(--color-error)" }}
-                    >
-                        {error}
-                    </motion.div>
-                )}
+                {error && <Alert message={error} type="error" />}
 
-                {success && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={styles.alert}
-                        style={{ backgroundColor: "rgba(0, 152, 95, 0.1)", borderColor: "rgba(0, 152, 95, 0.2)", color: "var(--color-success)" }}
-                    >
-                        {success}
-                    </motion.div>
-                )}
+                {success && <Alert message={success} type="success" />}
 
-                {/* Profile Picture Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={styles.section}
-                >
-                    <h2 className={styles.sectionTitle}>Profile Picture</h2>
-                    <div className={styles.avatarSection}>
-                        <div className={styles.avatarWrapper}>
-                            {avatarUrl ? (
-                                <Image
-                                    src={avatarUrl}
-                                    alt={fullName || "Profile"}
-                                    width={120}
-                                    height={120}
-                                    className={styles.avatarImage}
-                                />
-                            ) : (
-                                <div className={styles.avatarPlaceholder}>
-                                    {userInitials}
-                                </div>
-                            )}
-                        </div>
-                        <label className={styles.uploadButton}>
-                            <Upload className={styles.uploadIcon} />
-                            {uploadingAvatar ? "Uploading..." : "Upload Photo"}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleAvatarUpload}
-                                disabled={uploadingAvatar}
-                                className={styles.fileInput}
-                            />
-                        </label>
-                    </div>
-                </motion.div>
+                <AvatarUploadSection
+                    avatarUrl={avatarUrl}
+                    userInitials={userInitials}
+                    uploading={uploadingAvatar}
+                    onUpload={handleAvatarUpload}
+                />
 
-                {/* Profile Information */}
-                <motion.form
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
+                <ProfileFormSection
+                    fullName={fullName}
+                    onFullNameChange={setFullName}
                     onSubmit={handleProfileUpdate}
-                    className={styles.section}
-                >
-                    <h2 className={styles.sectionTitle}>Profile Information</h2>
-                    <div className={styles.field}>
-                        <label htmlFor="fullName" className={styles.label}>
-                            <User className={styles.labelIcon} />
-                            Full Name
-                        </label>
-                        <Input
-                            id="fullName"
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="Your name"
-                            required
-                        />
-                    </div>
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="md"
-                        fullWidth
-                        loading={loading}
-                    >
-                        Update Profile
-                    </Button>
-                </motion.form>
+                    loading={loading}
+                />
 
-                {/* Email Section */}
-                <motion.form
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
+                <EmailFormSection
+                    email={email}
+                    onEmailChange={setEmail}
                     onSubmit={handleEmailUpdate}
-                    className={styles.section}
-                >
-                    <h2 className={styles.sectionTitle}>Email</h2>
-                    <div className={styles.field}>
-                        <label htmlFor="email" className={styles.label}>
-                            <Mail className={styles.labelIcon} />
-                            Email Address
-                        </label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="your@email.com"
-                            required
-                        />
-                    </div>
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        size="md"
-                        fullWidth
-                        loading={loading}
-                    >
-                        Update Email
-                    </Button>
-                </motion.form>
+                    loading={loading}
+                />
 
-                {/* Password Section */}
-                <motion.form
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+                <PasswordFormSection
+                    password={password}
+                    confirmPassword={confirmPassword}
+                    onPasswordChange={setPassword}
+                    onConfirmPasswordChange={setConfirmPassword}
                     onSubmit={handlePasswordUpdate}
-                    className={styles.section}
-                >
-                    <h2 className={styles.sectionTitle}>Password</h2>
-                    <div className={styles.field}>
-                        <PasswordInput
-                            id="password"
-                            name="password"
-                            value={password}
-                            onChange={setPassword}
-                            placeholder="••••••••"
-                            label="New Password"
-                            required
-                            minLength={8}
-                            showStrength={true}
-                        />
-                    </div>
-                    <div className={styles.field}>
-                        <PasswordInput
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={confirmPassword}
-                            onChange={setConfirmPassword}
-                            placeholder="••••••••"
-                            label="Confirm Password"
-                            required
-                            minLength={8}
-                            showStrength={false}
-                        />
-                    </div>
-                    {password && confirmPassword && password !== confirmPassword && (
-                        <div className={styles.errorMessage}>
-                            Passwords do not match
-                        </div>
-                    )}
-                    <Button
-                        type="submit"
-                        variant="secondary"
-                        size="md"
-                        fullWidth
-                        loading={loading}
-                    >
-                        Update Password
-                    </Button>
-                </motion.form>
+                    loading={loading}
+                />
             </main>
         </div>
     );
 }
-

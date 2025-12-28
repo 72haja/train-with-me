@@ -4,7 +4,7 @@
  * This module contains all database queries for the VVS Together application.
  * In production, these would be actual Supabase queries.
  */
-import type { Friend } from "@/types/vvs";
+import type { Friend } from "@/packages/types/lib/types";
 import { getSupabaseClient } from "./client";
 
 /**

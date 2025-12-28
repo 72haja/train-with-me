@@ -1,0 +1,123 @@
+.card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+    padding: var(--spacing-md);
+}
+
+.user {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--spacing-md);
+    min-width: 0;
+}
+
+.avatar {
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--color-border);
+    width: 3rem;
+    height: 3rem;
+    overflow: hidden;
+}
+
+.avatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatarPlaceholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-accent);
+    width: 100%;
+    height: 100%;
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+}
+
+.info {
+    flex: 1;
+    min-width: 0;
+}
+
+.name {
+    margin-bottom: 0.125rem;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.email {
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.acceptButton,
+.declineButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    border: none;
+    border-radius: var(--radius-md);
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.acceptButton {
+    background-color: var(--color-success);
+    color: white;
+
+    &:hover {
+        background-color: #007a4d;
+    }
+}
+
+.declineButton {
+    background-color: var(--color-error);
+    color: white;
+
+    &:hover {
+        background-color: #b01e18;
+    }
+}
+
+.actionIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+}
+
+.pendingBadge {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-background);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-xs);
+}

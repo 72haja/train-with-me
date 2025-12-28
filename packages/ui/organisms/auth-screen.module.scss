@@ -1,147 +1,146 @@
 .container {
-  min-height: 100vh;
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-lg);
-  background-color: var(--color-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-background);
+    padding: var(--spacing-lg);
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .content {
-  width: 100%;
-  max-width: 24rem;
+    width: 100%;
+    max-width: 24rem;
 }
 
 .header {
-  text-align: center;
-  margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-2xl);
+    text-align: center;
 }
 
 .logo {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
 }
 
 .logoIcon {
-  width: 4rem;
-  height: 4rem;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--color-accent) 0%, #e6c000 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, var(--color-accent) 0%, #e6c000 100%);
+    width: 4rem;
+    height: 4rem;
 }
 
 .logoIconSvg {
-  width: 2rem;
-  height: 2rem;
-  color: var(--color-primary);
+    width: 2rem;
+    height: 2rem;
+    color: var(--color-primary);
 }
 
 .logoText {
-  color: var(--color-text-primary);
+    color: var(--color-text-primary);
 }
 
 .subtitle {
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-relaxed);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
 }
 
 .form {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-surface);
+    padding: var(--spacing-xl);
 }
 
 .field {
-  margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
 
-  &:last-of-type {
-    margin-bottom: var(--spacing-xl);
-  }
+    &:last-of-type {
+        margin-bottom: var(--spacing-xl);
+    }
 }
 
 .label {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
 }
 
 .labelIcon {
-  width: 1rem;
-  height: 1rem;
+    width: 1rem;
+    height: 1rem;
 }
 
 .input {
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  color: var(--color-text-primary);
-  background-color: var(--color-background);
-  transition: all var(--transition-fast);
+    transition: all var(--transition-fast);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-background);
+    padding: var(--spacing-md);
+    width: 100%;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
 
-  &:focus {
-    outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(255, 213, 0, 0.1);
-  }
+    &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 213, 0, 0.1);
+        border-color: var(--color-accent);
+    }
 
-  &::placeholder {
-    color: var(--color-text-tertiary);
-  }
+    &::placeholder {
+        color: var(--color-text-tertiary);
+    }
 }
 
 .error {
-  padding: var(--spacing-md);
-  background-color: rgba(220, 40, 30, 0.1);
-  border: 1px solid rgba(220, 40, 30, 0.2);
-  border-radius: var(--radius-md);
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid rgba(220, 40, 30, 0.2);
+    border-radius: var(--radius-md);
+    background-color: rgba(220, 40, 30, 0.1);
+    padding: var(--spacing-md);
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
 }
 
 .toggleButton {
-  width: 100%;
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-sm);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  background: none;
-  transition: color var(--transition-fast);
+    transition: color var(--transition-fast);
+    margin-top: var(--spacing-md);
+    background: none;
+    padding: var(--spacing-sm);
+    width: 100%;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
 
-  &:hover {
-    color: var(--color-text-primary);
-  }
+    &:hover {
+        color: var(--color-text-primary);
+    }
 }
 
 .footer {
-  margin-top: var(--spacing-xl);
-  text-align: center;
+    margin-top: var(--spacing-xl);
+    text-align: center;
 }
 
 .footerText {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-relaxed);
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
 }
 
 .ctaButton {
-  width: 100%;
-  margin-top: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    width: 100%;
 }
-

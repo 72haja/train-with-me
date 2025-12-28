@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import type { Connection } from "@/types/vvs";
+import type { Connection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { searchConnections } from "@apis/mockConnections";
 import { mockConnections } from "@apis/mockData";

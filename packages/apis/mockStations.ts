@@ -2,9 +2,8 @@
  * Mock VVS Station Data
  * This will be replaced with actual API calls when the VVS API is integrated
  */
-
-import type { Station } from "@/types/vvs";
-import type { AutocompleteOption } from "@/packages/ui/atoms/autocomplete";
+import type { Station } from "@/packages/types/lib/types";
+import type { AutocompleteOption } from "@ui/atoms/autocomplete";
 
 // Common Stuttgart VVS Stations
 export const mockStations: Station[] = [
@@ -98,7 +97,7 @@ export const mockStations: Station[] = [
  * Convert stations to autocomplete options
  */
 export function stationsToOptions(stations: Station[]): AutocompleteOption[] {
-    return stations.map((station) => ({
+    return stations.map(station => ({
         id: station.id,
         label: station.name,
         subtitle: station.city,
@@ -109,7 +108,7 @@ export function stationsToOptions(stations: Station[]): AutocompleteOption[] {
  * Find station by ID
  */
 export function findStationById(id: string): Station | undefined {
-    return mockStations.find((station) => station.id === id);
+    return mockStations.find(station => station.id === id);
 }
 
 /**
@@ -118,9 +117,8 @@ export function findStationById(id: string): Station | undefined {
 export function searchStations(query: string): Station[] {
     const lowerQuery = query.toLowerCase();
     return mockStations.filter(
-        (station) =>
+        station =>
             station.name.toLowerCase().includes(lowerQuery) ||
             station.city?.toLowerCase().includes(lowerQuery)
     );
 }
-

@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Mail, Train } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { motion } from "motion/react";
 import { signIn } from "@/app/actions/auth";
 import { Button } from "@ui/atoms/button";
+import { Alert } from "@ui/molecules/alert";
+import { AuthFooter } from "@ui/molecules/auth-footer";
+import { AuthFormField } from "@ui/molecules/auth-form-field";
+import { AuthHeader } from "@ui/molecules/auth-header";
 import styles from "@ui/organisms/auth-screen.module.scss";
 
 export default function SignInPage() {
@@ -55,18 +59,7 @@ export default function SignInPage() {
     return (
         <div className={styles.container}>
             <div className={styles.content}>
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={styles.header}>
-                    <div className={styles.logo}>
-                        <div className={styles.logoIcon}>
-                            <Train className={styles.logoIconSvg} />
-                        </div>
-                        <h1 className={styles.logoText}>VVS Together</h1>
-                    </div>
-                    <p className={styles.subtitle}>Sign in to coordinate with friends</p>
-                </motion.div>
+                <AuthHeader subtitle="Sign in to coordinate with friends" />
 
                 <motion.form
                     initial={{ opacity: 0, y: 20 }}
@@ -74,42 +67,32 @@ export default function SignInPage() {
                     transition={{ delay: 0.1 }}
                     onSubmit={handleSubmit}
                     className={styles.form}>
-                    <div className={styles.field}>
-                        <label htmlFor="email" className={styles.label}>
-                            <Mail className={styles.labelIcon} />
-                            Email
-                        </label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            className={styles.input}
-                            placeholder="anna@example.com"
-                            required
-                        />
-                    </div>
+                    <AuthFormField
+                        label="Email"
+                        labelIcon={<Mail className={styles.labelIcon} />}
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="anna@example.com"
+                        required
+                    />
 
-                    <div className={styles.field}>
-                        <label htmlFor="password" className={styles.label}>
-                            <Lock className={styles.labelIcon} />
-                            Password
-                        </label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            className={styles.input}
-                            placeholder="••••••••"
-                            required
-                            minLength={6}
-                        />
-                    </div>
+                    <AuthFormField
+                        label="Password"
+                        labelIcon={<Lock className={styles.labelIcon} />}
+                        id="password"
+                        name="password"
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                    />
 
-                    {error && <div className={styles.error}>{error}</div>}
+                    {error && <Alert message={error} type="error" />}
 
                     <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
                         Sign In
@@ -123,17 +106,7 @@ export default function SignInPage() {
                     </button>
                 </motion.form>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className={styles.footer}>
-                    <p className={styles.footerText}>
-                        VVS Together is for private friend groups only.
-                        <br />
-                        Not intended for collecting PII or securing sensitive data.
-                    </p>
-                </motion.div>
+                <AuthFooter />
             </div>
         </div>
     );

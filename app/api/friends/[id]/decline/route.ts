@@ -7,7 +7,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: RouteContext<"/api/friends/[id]/decline">
 ) {
     try {
         const supabase = createServerSupabaseClient(request);
@@ -34,10 +34,7 @@ export async function POST(
             .single();
 
         if (fetchError || !friendship) {
-            return NextResponse.json(
-                { error: "Friend request not found" },
-                { status: 404 }
-            );
+            return NextResponse.json({ error: "Friend request not found" }, { status: 404 });
         }
 
         // Delete the friendship
@@ -60,12 +57,8 @@ export async function POST(
         });
     } catch (error) {
         console.error("Error in POST /api/friends/[id]/decline:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
 export const dynamic = "force-dynamic";
-

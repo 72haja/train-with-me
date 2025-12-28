@@ -1,0 +1,14 @@
+{
+    "name": "@train-with-me/types",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./lib/types/index.ts",
+    "types": "./lib/types/index.ts",
+    "exports": {
+        ".": {
+            "types": "./lib/types/index.ts",
+            "default": "./lib/types/index.ts"
+        }
+    }
+}
+

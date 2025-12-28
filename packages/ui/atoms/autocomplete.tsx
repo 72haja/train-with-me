@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import styles from "./autocomplete.module.scss";
 
@@ -48,9 +48,10 @@ export function Autocomplete({
             onSearch(searchQuery);
         } else {
             // Default filtering
-            const filtered = options.filter((option) =>
-                option.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                option.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
+            const filtered = options.filter(
+                option =>
+                    option.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    option.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
             );
             setFilteredOptions(filtered);
         }
@@ -58,10 +59,7 @@ export function Autocomplete({
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (
-                containerRef.current &&
-                !containerRef.current.contains(event.target as Node)
-            ) {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         };
@@ -117,29 +115,25 @@ export function Autocomplete({
                         type="button"
                         onClick={handleClear}
                         className={styles.clearButton}
-                        aria-label="Clear selection"
-                    >
+                        aria-label="Clear selection">
                         <X className={styles.clearIcon} />
                     </button>
                 )}
             </div>
             {isOpen && filteredOptions.length > 0 && (
                 <div className={styles.dropdown}>
-                    {filteredOptions.map((option) => (
+                    {filteredOptions.map(option => (
                         <button
                             key={option.id}
                             type="button"
                             onClick={() => handleSelect(option)}
                             className={`${styles.option} ${
                                 value?.id === option.id ? styles.optionSelected : ""
-                            }`}
-                        >
+                            }`}>
                             <div className={styles.optionContent}>
                                 <span className={styles.optionLabel}>{option.label}</span>
                                 {option.subtitle && (
-                                    <span className={styles.optionSubtitle}>
-                                        {option.subtitle}
-                                    </span>
+                                    <span className={styles.optionSubtitle}>{option.subtitle}</span>
                                 )}
                             </div>
                         </button>
@@ -154,4 +148,3 @@ export function Autocomplete({
         </div>
     );
 }
-

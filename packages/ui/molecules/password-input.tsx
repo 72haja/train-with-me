@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Eye, EyeOff, Check, X } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Check, Eye, EyeOff, X } from "lucide-react";
 import { Input } from "@ui/atoms/input";
 import styles from "./password-input.module.scss";
 
@@ -51,7 +51,7 @@ export function PasswordInput({
                 lowercase: /[a-z]/.test(password),
                 uppercase: /[A-Z]/.test(password),
                 number: /[0-9]/.test(password),
-                symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password),
+                symbol: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password),
             };
 
             const passedChecks = Object.values(checks).filter(Boolean).length;
@@ -91,7 +91,7 @@ export function PasswordInput({
                     name={name}
                     type={showPassword ? "text" : "password"}
                     value={value}
-                    onChange={(e) => onChange(e.target.value)}
+                    onChange={e => onChange(e.target.value)}
                     placeholder={placeholder}
                     required={required}
                     minLength={minLength}
@@ -101,8 +101,7 @@ export function PasswordInput({
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className={styles.toggleButton}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                >
+                    aria-label={showPassword ? "Hide password" : "Show password"}>
                     {showPassword ? (
                         <EyeOff className={styles.toggleIcon} />
                     ) : (
@@ -126,8 +125,7 @@ export function PasswordInput({
                     </div>
                     <div className={styles.requirements}>
                         <div
-                            className={`${styles.requirement} ${strength.checks.length ? styles.passed : ""}`}
-                        >
+                            className={`${styles.requirement} ${strength.checks.length ? styles.passed : ""}`}>
                             {strength.checks.length ? (
                                 <Check className={styles.checkIcon} />
                             ) : (
@@ -136,8 +134,7 @@ export function PasswordInput({
                             <span>At least {minLength} characters</span>
                         </div>
                         <div
-                            className={`${styles.requirement} ${strength.checks.lowercase ? styles.passed : ""}`}
-                        >
+                            className={`${styles.requirement} ${strength.checks.lowercase ? styles.passed : ""}`}>
                             {strength.checks.lowercase ? (
                                 <Check className={styles.checkIcon} />
                             ) : (
@@ -146,8 +143,7 @@ export function PasswordInput({
                             <span>Lowercase letter</span>
                         </div>
                         <div
-                            className={`${styles.requirement} ${strength.checks.uppercase ? styles.passed : ""}`}
-                        >
+                            className={`${styles.requirement} ${strength.checks.uppercase ? styles.passed : ""}`}>
                             {strength.checks.uppercase ? (
                                 <Check className={styles.checkIcon} />
                             ) : (
@@ -156,8 +152,7 @@ export function PasswordInput({
                             <span>Uppercase letter</span>
                         </div>
                         <div
-                            className={`${styles.requirement} ${strength.checks.number ? styles.passed : ""}`}
-                        >
+                            className={`${styles.requirement} ${strength.checks.number ? styles.passed : ""}`}>
                             {strength.checks.number ? (
                                 <Check className={styles.checkIcon} />
                             ) : (
@@ -166,8 +161,7 @@ export function PasswordInput({
                             <span>Number</span>
                         </div>
                         <div
-                            className={`${styles.requirement} ${strength.checks.symbol ? styles.passed : ""}`}
-                        >
+                            className={`${styles.requirement} ${strength.checks.symbol ? styles.passed : ""}`}>
                             {strength.checks.symbol ? (
                                 <Check className={styles.checkIcon} />
                             ) : (
@@ -181,4 +175,3 @@ export function PasswordInput({
         </div>
     );
 }
-

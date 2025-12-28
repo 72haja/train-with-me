@@ -1,0 +1,42 @@
+.section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.sectionTitle {
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-lg);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+}
+
+.labelIcon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.buttonIcon {
+    margin-right: var(--spacing-xs);
+    width: 1rem;
+    height: 1rem;
+}

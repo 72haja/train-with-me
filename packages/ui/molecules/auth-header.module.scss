@@ -1,0 +1,38 @@
+.header {
+    margin-bottom: var(--spacing-2xl);
+    text-align: center;
+}
+
+.logo {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.logoIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, var(--color-accent) 0%, #e6c000 100%);
+    width: 4rem;
+    height: 4rem;
+}
+
+.logoIconSvg {
+    width: 2rem;
+    height: 2rem;
+    color: var(--color-primary);
+}
+
+.logoText {
+    color: var(--color-text-primary);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+}

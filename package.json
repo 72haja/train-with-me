@@ -1,36 +1,37 @@
 {
-  "name": "train-with-me",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@radix-ui/react-slot": "^1.2.4",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.87.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "lucide-react": "^0.556.0",
-    "motion": "^12.23.25",
-    "next": "16.0.8",
-    "react": "19.2.1",
-    "react-dom": "19.2.1"
-  },
-  "devDependencies": {
-    "@becklyn/eslint": "^1.2.1",
-    "@becklyn/prettier": "^2.1.6",
-    "@becklyn/tsconfig": "^1.1.3",
-    "@types/node": "^24.10.2",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "babel-plugin-react-compiler": "^1.0.0",
-    "sass": "^1.95.0",
-    "typescript": "^5.9.3"
-  },
-  "prettier": "@becklyn/prettier"
+    "name": "train-with-me",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "eslint",
+        "format": "prettier --write . && eslint --fix ."
+    },
+    "dependencies": {
+        "@radix-ui/react-slot": "^1.2.4",
+        "@supabase/ssr": "^0.8.0",
+        "@supabase/supabase-js": "^2.87.1",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "date-fns": "^4.1.0",
+        "lucide-react": "^0.556.0",
+        "motion": "^12.23.25",
+        "next": "16.0.8",
+        "react": "19.2.1",
+        "react-dom": "19.2.1"
+    },
+    "devDependencies": {
+        "@becklyn/eslint": "^1.2.1",
+        "@becklyn/prettier": "^2.1.6",
+        "@becklyn/tsconfig": "^1.1.3",
+        "@types/node": "^24.10.2",
+        "@types/react": "^19.2.7",
+        "@types/react-dom": "^19.2.3",
+        "babel-plugin-react-compiler": "^1.0.0",
+        "sass": "^1.95.0",
+        "typescript": "^5.9.3"
+    },
+    "prettier": "@becklyn/prettier"
 }
