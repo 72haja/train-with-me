@@ -1,4 +1,4 @@
-import { unstable_cache, unstable_noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
@@ -8,7 +8,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * Uses unstable_cache for request-time caching (doesn't interfere with prerendering)
  */
 const getCachedFriendRequests = unstable_cache(
-    async (userId: string, supabase: ReturnType<typeof createServerSupabaseClient>) => {
+    async (userId: string, supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) => {
         // Get pending requests where user is the recipient (received requests)
         const { data: receivedRequests, error: receivedError } = await supabase
             .from("friendships")
@@ -111,13 +111,8 @@ const getCachedFriendRequests = unstable_cache(
  * GET /api/friends/requests
  * Get pending friend requests (both sent and received)
  */
-export async function GET(request: NextRequest) {
-    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
-
-    // Create Supabase client outside try/catch so PPR errors can propagate
-    // This allows Next.js to properly handle the static bailout
-    const supabase = createServerSupabaseClient(request);
-
+export async function GET(_request: NextRequest) {
+    const supabase = await createServerSupabaseClient();
     try {
         const {
             data: { user },
@@ -135,15 +130,6 @@ export async function GET(request: NextRequest) {
             data,
         });
     } catch (error) {
-        // Re-throw PPR errors (errors with digest 'NEXT_PRERENDER_INTERRUPTED')
-        if (
-            error &&
-            typeof error === "object" &&
-            "digest" in error &&
-            error.digest === "NEXT_PRERENDER_INTERRUPTED"
-        ) {
-            throw error;
-        }
         console.error("Error in GET /api/friends/requests:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }

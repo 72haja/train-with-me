@@ -2,10 +2,9 @@
  * Connection types
  * Types for train/bus connections and journeys
  */
-
 import type { Friend } from "./friend";
-import type { Line } from "./transport";
 import type { Stop } from "./stop";
+import type { Line } from "./transport";
 import type { TransportType } from "./transport";
 
 export interface Connection {
@@ -37,4 +36,3 @@ export interface ConnectionSearchParams {
     /** Include only specific transport types */
     transportTypes?: TransportType[];
 }
-

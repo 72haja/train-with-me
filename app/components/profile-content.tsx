@@ -11,7 +11,7 @@ import { AvatarUploadSection } from "@ui/molecules/avatar-upload-section";
 import { EmailFormSection } from "@ui/molecules/email-form-section";
 import { PasswordFormSection } from "@ui/molecules/password-form-section";
 import { ProfileFormSection } from "@ui/molecules/profile-form-section";
-import styles from "../profile/page.module.scss";
+import styles from "@/app/profile/page.module.scss";
 
 export function ProfileContent() {
     const router = useRouter();
@@ -244,4 +244,3 @@ export function ProfileContent() {
         </>
     );
 }
-

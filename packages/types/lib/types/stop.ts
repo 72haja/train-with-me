@@ -2,7 +2,6 @@
  * Stop types
  * Types for train/bus stops with timing information
  */
-
 import type { Station } from "./station";
 
 export interface Stop {
@@ -17,4 +16,3 @@ export interface Stop {
     /** Track/platform changes */
     platformChange?: boolean;
 }
-

@@ -1,4 +1,3 @@
-import { unstable_noStore } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
@@ -6,10 +5,9 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * DELETE /api/friends/[id]
  * Remove a friend (delete friendship)
  */
-export async function DELETE(request: NextRequest, { params }: RouteContext<"/api/friends/[id]">) {
-    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
+export async function DELETE(_request: NextRequest, { params }: RouteContext<"/api/friends/[id]">) {
     try {
-        const supabase = createServerSupabaseClient(request);
+        const supabase = await createServerSupabaseClient();
 
         const {
             data: { user },

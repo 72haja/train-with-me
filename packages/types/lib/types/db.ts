@@ -2,7 +2,6 @@
  * Database types
  * Types for Supabase database schema (converted to camelCase)
  */
-
 import type { TransportType } from "./transport";
 
 export interface DbUser {
@@ -40,4 +39,3 @@ export interface DbFriendship {
     status: "pending" | "accepted" | "blocked";
     createdAt: string;
 }
-

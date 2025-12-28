@@ -1,4 +1,3 @@
-import { unstable_noStore } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
@@ -7,13 +6,11 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * Decline a friend request (delete it)
  */
 export async function POST(
-    request: NextRequest,
+    _request: NextRequest,
     { params }: RouteContext<"/api/friends/[id]/decline">
 ) {
-    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
-
     try {
-        const supabase = createServerSupabaseClient(request);
+        const supabase = await createServerSupabaseClient();
         const {
             data: { user },
             error: authError,

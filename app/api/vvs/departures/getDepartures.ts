@@ -1,6 +1,6 @@
 /**
  * Shared function to fetch departures from a VVS station
- * 
+ *
  * This function is cached per stationId and limit combination for 30 seconds.
  * Results are cached using Next.js Cache Components.
  */
@@ -29,4 +29,3 @@ export async function getDepartures(stationId: string, limit: number) {
         },
     };
 }
-

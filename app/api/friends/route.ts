@@ -1,4 +1,4 @@
-import { unstable_cache, unstable_noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
@@ -8,7 +8,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * Uses unstable_cache for request-time caching (doesn't interfere with prerendering)
  */
 const getCachedFriends = unstable_cache(
-    async (userId: string, supabase: ReturnType<typeof createServerSupabaseClient>) => {
+    async (userId: string, supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) => {
         // Get accepted friendships where user is either requester or recipient
         const { data, error } = await supabase
             .from("friendships")
@@ -70,13 +70,8 @@ const getCachedFriends = unstable_cache(
  * GET /api/friends
  * Get current user's friends
  */
-export async function GET(request: NextRequest) {
-    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
-
-    // Create Supabase client outside try/catch so PPR errors can propagate
-    // This allows Next.js to properly handle the static bailout
-    const supabase = createServerSupabaseClient(request);
-
+export async function GET(_request: NextRequest) {
+    const supabase = await createServerSupabaseClient();
     try {
         // Get current user from session
         const {
@@ -97,15 +92,6 @@ export async function GET(request: NextRequest) {
             data: friends,
         });
     } catch (error) {
-        // Re-throw PPR errors (errors with digest 'NEXT_PRERENDER_INTERRUPTED')
-        if (
-            error &&
-            typeof error === "object" &&
-            "digest" in error &&
-            error.digest === "NEXT_PRERENDER_INTERRUPTED"
-        ) {
-            throw error;
-        }
         console.error("Error in GET /api/friends:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }

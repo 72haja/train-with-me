@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
@@ -43,38 +42,31 @@ export async function getServerSupabaseClient() {
  * Note: Cookie access is fully lazy - cookies are only accessed when Supabase
  * actually needs them (e.g., during auth.getUser()), not during client creation.
  */
-export function createServerSupabaseClient(request: NextRequest) {
+export async function createServerSupabaseClient() {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         throw new Error("Missing Supabase environment variables");
     }
 
-    // Create a lazy getter that only accesses cookies when actually called
-    // This prevents cookie access during client creation/initialization
-    let cookiesCache: ReturnType<NextRequest["cookies"]["getAll"]> | null = null;
-    const getCookiesLazy = () => {
-        // Only access cookies when this function is actually called
-        // This happens when Supabase needs to read cookies (e.g., during auth.getUser())
-        if (cookiesCache === null) {
-            cookiesCache = request.cookies.getAll();
-        }
-        return cookiesCache;
-    };
+    const cookieStore = await cookies();
 
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
                 getAll() {
-                    // Lazy access - only called when Supabase actually needs cookies
-                    return getCookiesLazy();
+                    return cookieStore.getAll();
                 },
                 setAll(cookiesToSet) {
-                    // In API routes, we can't set cookies in the request
-                    // They will be set by the client-side code or server actions
-                    cookiesToSet.forEach(({ name, value }) => {
-                        request.cookies.set(name, value);
-                    });
+                    try {
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            cookieStore.set(name, value, options)
+                        );
+                    } catch {
+                        // The `setAll` method was called from a Server Component.
+                        // This can be ignored if you have middleware refreshing
+                        // user sessions.
+                    }
                 },
             },
         }

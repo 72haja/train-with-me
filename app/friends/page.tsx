@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
+import type { FriendRequest, FriendWithFriendshipId } from "@/packages/types/lib/types";
 import { AddFriendForm } from "@ui/molecules/add-friend-form";
 import { Alert } from "@ui/molecules/alert";
 import { FriendCard } from "@ui/molecules/friend-card";
 import { FriendRequestList } from "@ui/molecules/friend-request-list";
-import type { FriendRequest, FriendWithFriendshipId } from "@/packages/types/lib/types";
 import styles from "./page.module.scss";
 
 export default function FriendsPage() {

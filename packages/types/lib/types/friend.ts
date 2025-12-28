@@ -26,4 +26,3 @@ export interface FriendRequest {
 export interface FriendWithFriendshipId extends Friend {
     friendshipId: string;
 }
-
