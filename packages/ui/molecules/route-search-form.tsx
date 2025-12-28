@@ -21,7 +21,8 @@ export function RouteSearchForm({
     const [origin, setOrigin] = useState<AutocompleteOption | null>(null);
     const [destination, setDestination] = useState<AutocompleteOption | null>(null);
 
-    const stationOptions = stationsToOptions(mockStations);
+    const stationOptionsStart = stationsToOptions(mockStations, destination?.id);
+    const stationOptionsDestination = stationsToOptions(mockStations, origin?.id);
 
     const handleSearch = () => {
         if (origin && destination) {
@@ -42,7 +43,7 @@ export function RouteSearchForm({
             <div className={styles.fields}>
                 <div className={styles.field}>
                     <Autocomplete
-                        options={stationOptions}
+                        options={stationOptionsStart}
                         value={origin}
                         onChange={setOrigin}
                         placeholder="Von..."
@@ -60,7 +61,7 @@ export function RouteSearchForm({
 
                 <div className={styles.field}>
                     <Autocomplete
-                        options={stationOptions}
+                        options={stationOptionsDestination}
                         value={destination}
                         onChange={setDestination}
                         placeholder="Nach..."

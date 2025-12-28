@@ -96,12 +96,14 @@ export const mockStations: Station[] = [
 /**
  * Convert stations to autocomplete options
  */
-export function stationsToOptions(stations: Station[]): AutocompleteOption[] {
-    return stations.map(station => ({
-        id: station.id,
-        label: station.name,
-        subtitle: station.city,
-    }));
+export function stationsToOptions(stations: Station[], excludeId?: string): AutocompleteOption[] {
+    return stations
+        .filter(station => station.id !== excludeId)
+        .map(station => ({
+            id: station.id,
+            label: station.name,
+            subtitle: station.city,
+        }));
 }
 
 /**
