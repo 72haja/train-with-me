@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { clsx } from "clsx";
 import { Star } from "lucide-react";
+import {
+    flip,
+    offset,
+    shift,
+    useFloating,
+    useFocus,
+    useHover,
+    useInteractions,
+} from "@floating-ui/react";
 import styles from "./favorite-button.module.scss";
 
 interface FavoriteButtonProps {
@@ -20,18 +29,28 @@ export function FavoriteButton({
     className = "",
     iconSize = "sm",
 }: FavoriteButtonProps) {
-    const [showTooltip, setShowTooltip] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const { refs, floatingStyles, context } = useFloating({
+        open: isOpen,
+        onOpenChange: setIsOpen,
+        placement: "top",
+        middleware: [offset(8), flip(), shift({ padding: 8 })],
+    });
+
+    const hover = useHover(context, { move: false });
+    const focus = useFocus(context);
+
+    const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus]);
 
     return (
         <div className={clsx(styles.container, className)}>
             <button
                 type="button"
+                ref={refs.setReference}
                 onClick={onClick}
                 disabled={isLoading}
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-                onFocus={() => setShowTooltip(true)}
-                onBlur={() => setShowTooltip(false)}
+                {...getReferenceProps()}
                 className={clsx(
                     styles.button,
                     isFavorite && styles.buttonActive,
@@ -47,8 +66,13 @@ export function FavoriteButton({
                     fill={isFavorite ? "currentColor" : "none"}
                 />
             </button>
-            {showTooltip && (
-                <div className={styles.tooltip} role="tooltip">
+            {isOpen && (
+                <div
+                    ref={refs.setFloating}
+                    style={floatingStyles}
+                    {...getFloatingProps()}
+                    className={styles.tooltip}
+                    role="tooltip">
                     {isFavorite ? "Remove from favorites" : "Add to favorites"}
                 </div>
             )}
