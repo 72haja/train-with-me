@@ -39,3 +39,11 @@ export interface DbFriendship {
     status: "pending" | "accepted" | "blocked";
     createdAt: string;
 }
+
+export interface DbFavoriteConnection {
+    id: string;
+    userId: string;
+    originStationId: string;
+    destinationStationId: string;
+    createdAt: string;
+}

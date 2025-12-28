@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { MapPin, Train, Users } from "lucide-react";
 import { motion } from "motion/react";
-import { RouteSearchForm } from "@ui/molecules/route-search-form";
+import { FavoriteConnections } from "@ui/molecules/favorite-connections";
+import { RouteSearchForm, type RouteSearchFormRef } from "@ui/molecules/route-search-form";
 import { UserMenu } from "@ui/molecules/user-menu";
 import styles from "./home-screen.module.scss";
 
@@ -17,6 +19,14 @@ export function HomeScreen({
     onSearchRoute,
     searchLoading = false,
 }: HomeScreenProps) {
+    const searchFormRef = useRef<RouteSearchFormRef>(null);
+
+    const handleFavoriteSelect = (originId: string, destinationId: string) => {
+        if (searchFormRef.current) {
+            searchFormRef.current.setRoute(originId, destinationId);
+        }
+    };
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -58,7 +68,12 @@ export function HomeScreen({
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
                             className={styles.searchForm}>
-                            <RouteSearchForm onSearch={onSearchRoute} loading={searchLoading} />
+                            <RouteSearchForm
+                                ref={searchFormRef}
+                                onSearch={onSearchRoute}
+                                loading={searchLoading}
+                            />
+                            <FavoriteConnections onSelectFavorite={handleFavoriteSelect} />
                         </motion.div>
                     ) : (
                         <motion.button

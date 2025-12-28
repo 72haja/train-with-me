@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeftRight, Search } from "lucide-react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { ArrowUpDown, MapPin, Search } from "lucide-react";
 import { mockStations, stationsToOptions } from "@apis/mockStations";
 import { Autocomplete, type AutocompleteOption } from "@ui/atoms/autocomplete";
 import { Button } from "@ui/atoms/button";
@@ -11,77 +11,155 @@ interface RouteSearchFormProps {
     onSearch: (originId: string, destinationId: string) => void;
     loading?: boolean;
     className?: string;
+    initialOriginId?: string;
+    initialDestinationId?: string;
 }
 
-export function RouteSearchForm({
-    onSearch,
-    loading = false,
-    className = "",
-}: RouteSearchFormProps) {
-    const [origin, setOrigin] = useState<AutocompleteOption | null>(null);
-    const [destination, setDestination] = useState<AutocompleteOption | null>(null);
+export interface RouteSearchFormRef {
+    setOrigin: (originId: string) => void;
+    setDestination: (destinationId: string) => void;
+    setRoute: (originId: string, destinationId: string) => void;
+}
 
-    const stationOptionsStart = stationsToOptions(mockStations, destination?.id);
-    const stationOptionsDestination = stationsToOptions(mockStations, origin?.id);
+export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormProps>(
+    function RouteSearchForm(
+        { onSearch, loading = false, className = "", initialOriginId, initialDestinationId },
+        ref
+    ) {
+        const [origin, setOrigin] = useState<AutocompleteOption | null>(null);
+        const [destination, setDestination] = useState<AutocompleteOption | null>(null);
 
-    const handleSearch = () => {
-        if (origin && destination) {
-            onSearch(origin.id, destination.id);
-        }
-    };
+        // Set initial values from props
+        useEffect(() => {
+            if (initialOriginId) {
+                const station = mockStations.find(s => s.id === initialOriginId);
+                if (station) {
+                    setOrigin({ id: station.id, label: station.name, subtitle: station.city });
+                }
+            }
+        }, [initialOriginId]);
 
-    const handleSwap = () => {
-        const temp = origin;
-        setOrigin(destination);
-        setDestination(temp);
-    };
+        useEffect(() => {
+            if (initialDestinationId) {
+                const station = mockStations.find(s => s.id === initialDestinationId);
+                if (station) {
+                    setDestination({
+                        id: station.id,
+                        label: station.name,
+                        subtitle: station.city,
+                    });
+                }
+            }
+        }, [initialDestinationId]);
 
-    const canSearch = origin && destination && origin.id !== destination.id;
+        // Expose methods via ref
+        useImperativeHandle(ref, () => ({
+            setOrigin: (originId: string) => {
+                const station = mockStations.find(s => s.id === originId);
+                if (station) {
+                    setOrigin({ id: station.id, label: station.name, subtitle: station.city });
+                }
+            },
+            setDestination: (destinationId: string) => {
+                const station = mockStations.find(s => s.id === destinationId);
+                if (station) {
+                    setDestination({
+                        id: station.id,
+                        label: station.name,
+                        subtitle: station.city,
+                    });
+                }
+            },
+            setRoute: (originId: string, destinationId: string) => {
+                const originStation = mockStations.find(s => s.id === originId);
+                const destinationStation = mockStations.find(s => s.id === destinationId);
+                if (originStation) {
+                    setOrigin({
+                        id: originStation.id,
+                        label: originStation.name,
+                        subtitle: originStation.city,
+                    });
+                }
+                if (destinationStation) {
+                    setDestination({
+                        id: destinationStation.id,
+                        label: destinationStation.name,
+                        subtitle: destinationStation.city,
+                    });
+                }
+            },
+        }));
 
-    return (
-        <div className={`${styles.form} ${className}`}>
-            <div className={styles.fields}>
-                <div className={styles.field}>
-                    <Autocomplete
-                        options={stationOptionsStart}
-                        value={origin}
-                        onChange={setOrigin}
-                        placeholder="Von..."
-                        label="Start"
-                    />
+        const stationOptionsStart = stationsToOptions(mockStations, destination?.id);
+        const stationOptionsDestination = stationsToOptions(mockStations, origin?.id);
+
+        const handleSearch = () => {
+            if (origin && destination) {
+                onSearch(origin.id, destination.id);
+            }
+        };
+
+        const handleSwap = () => {
+            const temp = origin;
+            setOrigin(destination);
+            setDestination(temp);
+        };
+
+        const canSearch = origin && destination && origin.id !== destination.id;
+
+        return (
+            <div className={`${styles.form} ${className}`}>
+                <div className={styles.fields}>
+                    <div className={styles.field}>
+                        <MapPin className={styles.locationIcon} />
+                        <label className={styles.fieldLabel}>Start</label>
+                        <div className={styles.autocompleteWrapper}>
+                            <Autocomplete
+                                options={stationOptionsStart}
+                                value={origin}
+                                onChange={setOrigin}
+                                placeholder="Von..."
+                            />
+                        </div>
+                    </div>
+
+                    <div className={styles.separator} />
+
+                    <div className={styles.field}>
+                        <MapPin className={styles.locationIcon} />
+                        <label className={styles.fieldLabel}>Ziel</label>
+                        <div className={styles.autocompleteWrapper}>
+                            <Autocomplete
+                                options={stationOptionsDestination}
+                                value={destination}
+                                onChange={setDestination}
+                                placeholder="Nach..."
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleSwap}
+                        className={styles.swapButton}
+                        aria-label="Swap origin and destination">
+                        <ArrowUpDown className={styles.swapIcon} />
+                    </button>
                 </div>
 
-                <button
+                <Button
                     type="button"
-                    onClick={handleSwap}
-                    className={styles.swapButton}
-                    aria-label="Swap origin and destination">
-                    <ArrowLeftRight className={styles.swapIcon} />
-                </button>
-
-                <div className={styles.field}>
-                    <Autocomplete
-                        options={stationOptionsDestination}
-                        value={destination}
-                        onChange={setDestination}
-                        placeholder="Nach..."
-                        label="Ziel"
-                    />
-                </div>
+                    onClick={handleSearch}
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    disabled={!canSearch || loading}
+                    loading={loading}
+                    className={styles.searchButton}>
+                    <Search className={styles.searchButtonIcon} />
+                    Verbindungen suchen
+                </Button>
             </div>
-
-            <Button
-                type="button"
-                onClick={handleSearch}
-                variant="primary"
-                size="lg"
-                fullWidth
-                disabled={!canSearch || loading}
-                loading={loading}
-                className={styles.searchButton}>
-                <Search className={styles.searchButtonIcon} />
-                Verbindungen suchen
-            </Button>
-        </div>
-    );
-}
+        );
+    }
+);

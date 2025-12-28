@@ -13,6 +13,8 @@ interface TrainSelectionScreenProps {
     onBack: () => void;
     userConnectionId: string | null;
     stationName?: string;
+    onAddToFavorites?: (originId: string, destinationId: string) => void;
+    isFavorite?: (originId: string, destinationId: string) => boolean;
 }
 
 export function TrainSelectionScreen({
@@ -21,6 +23,8 @@ export function TrainSelectionScreen({
     onBack,
     userConnectionId,
     stationName = "Hauptbahnhof",
+    onAddToFavorites,
+    isFavorite,
 }: TrainSelectionScreenProps) {
     const currentTime = new Date();
 
@@ -55,6 +59,15 @@ export function TrainSelectionScreen({
                                 connection={connection}
                                 onClick={() => onSelectConnection(connection)}
                                 isActive={userConnectionId === connection.id}
+                                onAddToFavorites={onAddToFavorites}
+                                isFavorite={
+                                    isFavorite
+                                        ? isFavorite(
+                                              connection.departure.station.id,
+                                              connection.arrival.station.id
+                                          )
+                                        : false
+                                }
                             />
                         </motion.div>
                     ))}

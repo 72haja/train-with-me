@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import type { Connection } from "@/packages/types/lib/types";
+import type { Connection, DbFavoriteConnection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { searchConnections } from "@apis/mockConnections";
 import { mockConnections } from "@apis/mockData";
@@ -22,6 +22,7 @@ export default function App() {
     const [userConnectionId, setUserConnectionId] = useState<string | null>(null);
     const [connections, setConnections] = useState<Connection[]>(mockConnections);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [favorites, setFavorites] = useState<DbFavoriteConnection[]>([]);
 
     // Redirect to sign in if not authenticated
     useEffect(() => {
@@ -29,6 +30,56 @@ export default function App() {
             router.push("/auth/signin");
         }
     }, [user, authLoading, router]);
+
+    // Load favorites when user is available
+    useEffect(() => {
+        if (user) {
+            loadFavorites();
+        }
+    }, [user]);
+
+    const loadFavorites = async () => {
+        try {
+            const response = await fetch("/api/favorites");
+            if (response.ok) {
+                const data = await response.json();
+                setFavorites(data.favorites || []);
+            }
+        } catch (error) {
+            console.error("Failed to load favorites:", error);
+        }
+    };
+
+    const handleAddToFavorites = async (originId: string, destinationId: string) => {
+        try {
+            const response = await fetch("/api/favorites", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    originStationId: originId,
+                    destinationStationId: destinationId,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setFavorites(prev => [...prev, data.favorite]);
+            } else if (response.status === 409) {
+                // Favorite already exists, reload favorites to get the current state
+                await loadFavorites();
+            }
+        } catch (error) {
+            console.error("Failed to add favorite:", error);
+        }
+    };
+
+    const isFavorite = (originId: string, destinationId: string) => {
+        return favorites.some(
+            fav => fav.originStationId === originId && fav.destinationStationId === destinationId
+        );
+    };
 
     const handleSelectConnection = (connection: Connection) => {
         setSelectedConnection(connection);
@@ -77,6 +128,11 @@ export default function App() {
 
     const handleSearchRoute = (originId: string, destinationId: string) => {
         setSearchLoading(true);
+
+        // Reload favorites when searching to ensure they're up to date
+        if (user) {
+            loadFavorites();
+        }
 
         // Simulate API call delay
         setTimeout(() => {
@@ -132,6 +188,8 @@ export default function App() {
                             onSelectConnection={handleSelectConnection}
                             onBack={handleBack}
                             userConnectionId={userConnectionId}
+                            onAddToFavorites={handleAddToFavorites}
+                            isFavorite={isFavorite}
                         />
                     </motion.div>
                 )}
