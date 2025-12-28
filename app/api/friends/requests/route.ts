@@ -1,23 +1,14 @@
+import { unstable_cache, unstable_noStore } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
- * GET /api/friends/requests
- * Get pending friend requests (both sent and received)
+ * Cached function to fetch friend requests
+ * Results are cached per user ID for 30 seconds (requests change more frequently)
+ * Uses unstable_cache for request-time caching (doesn't interfere with prerendering)
  */
-export async function GET(request: NextRequest) {
-    try {
-        const supabase = createServerSupabaseClient(request);
-
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
+const getCachedFriendRequests = unstable_cache(
+    async (userId: string, supabase: ReturnType<typeof createServerSupabaseClient>) => {
         // Get pending requests where user is the recipient (received requests)
         const { data: receivedRequests, error: receivedError } = await supabase
             .from("friendships")
@@ -36,7 +27,7 @@ export async function GET(request: NextRequest) {
                 )
             `
             )
-            .eq("friend_id", user.id)
+            .eq("friend_id", userId)
             .eq("status", "pending");
 
         if (receivedError) {
@@ -61,7 +52,7 @@ export async function GET(request: NextRequest) {
                 )
             `
             )
-            .eq("user_id", user.id)
+            .eq("user_id", userId)
             .eq("status", "pending");
 
         if (sentError) {
@@ -104,17 +95,56 @@ export async function GET(request: NextRequest) {
             };
         });
 
+        return {
+            received,
+            sent,
+        };
+    },
+    ["friend-requests"],
+    {
+        revalidate: 30, // Cache for 30 seconds
+        tags: ["friend-requests"],
+    }
+);
+
+/**
+ * GET /api/friends/requests
+ * Get pending friend requests (both sent and received)
+ */
+export async function GET(request: NextRequest) {
+    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
+
+    // Create Supabase client outside try/catch so PPR errors can propagate
+    // This allows Next.js to properly handle the static bailout
+    const supabase = createServerSupabaseClient(request);
+
+    try {
+        const {
+            data: { user },
+            error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const data = await getCachedFriendRequests(user.id, supabase);
+
         return NextResponse.json({
             success: true,
-            data: {
-                received,
-                sent,
-            },
+            data,
         });
     } catch (error) {
+        // Re-throw PPR errors (errors with digest 'NEXT_PRERENDER_INTERRUPTED')
+        if (
+            error &&
+            typeof error === "object" &&
+            "digest" in error &&
+            error.digest === "NEXT_PRERENDER_INTERRUPTED"
+        ) {
+            throw error;
+        }
         console.error("Error in GET /api/friends/requests:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
-
-export const dynamic = "force-dynamic";

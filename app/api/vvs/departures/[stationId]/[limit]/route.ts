@@ -1,25 +1,33 @@
 /**
- * API Route: Get Departures
+ * API Route: Get Departures (with limit)
  *
- * GET /api/vvs/departures?stationId=5006056&limit=20
+ * GET /api/vvs/departures/[stationId]/[limit]
  *
  * This endpoint fetches departures from a VVS station and enriches them
- * with friend data from Supabase.
+ * with friend data from Supabase. Uses the limit from route params.
+ *
+ * Note: Using RouteContext for both stationId and limit avoids prerendering issues.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { mockConnections } from "@apis/mockData";
+import { getDepartures } from "@/app/api/vvs/departures/getDepartures";
 
-// import { fetchDeparturesFromVVS } from '@/packages/apis/vvs/api';
-// import { getFriendsOnConnection } from '@/packages/apis/supabase/queries';
-
-export async function GET(request: NextRequest) {
+export async function GET(
+    _request: NextRequest,
+    { params }: RouteContext<"/api/vvs/departures/[stationId]/[limit]">
+) {
     try {
-        const searchParams = request.nextUrl.searchParams;
-        const stationId = searchParams.get("stationId");
-        const limit = parseInt(searchParams.get("limit") || "20");
+        // Get stationId and limit from route params
+        const { stationId, limit: limitParam } = await params;
+
+        // Parse limit from route param
+        const limit = parseInt(limitParam || "20", 10);
 
         if (!stationId) {
             return NextResponse.json({ error: "stationId is required" }, { status: 400 });
+        }
+
+        if (isNaN(limit) || limit < 1) {
+            return NextResponse.json({ error: "limit must be a positive number" }, { status: 400 });
         }
 
         // In production, this would:
@@ -40,23 +48,10 @@ export async function GET(request: NextRequest) {
         //   })
         // );
 
-        // For now, return mock data
-        const connections = mockConnections.slice(0, limit);
-
-        return NextResponse.json({
-            success: true,
-            data: connections,
-            meta: {
-                stationId,
-                count: connections.length,
-                timestamp: new Date().toISOString(),
-            },
-        });
+        const result = await getDepartures(stationId, limit);
+        return NextResponse.json(result);
     } catch (error) {
         console.error("Error fetching departures:", error);
         return NextResponse.json({ error: "Failed to fetch departures" }, { status: 500 });
     }
 }
-
-export const dynamic = "force-dynamic";
-export const revalidate = 30; // Revalidate every 30 seconds

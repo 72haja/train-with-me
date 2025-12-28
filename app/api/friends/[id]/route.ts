@@ -1,3 +1,4 @@
+import { unstable_noStore } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
@@ -6,6 +7,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * Remove a friend (delete friendship)
  */
 export async function DELETE(request: NextRequest, { params }: RouteContext<"/api/friends/[id]">) {
+    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
     try {
         const supabase = createServerSupabaseClient(request);
 
@@ -50,9 +52,16 @@ export async function DELETE(request: NextRequest, { params }: RouteContext<"/ap
             message: "Friend removed",
         });
     } catch (error) {
+        // Re-throw PPR errors (errors with digest 'NEXT_PRERENDER_INTERRUPTED')
+        if (
+            error &&
+            typeof error === "object" &&
+            "digest" in error &&
+            error.digest === "NEXT_PRERENDER_INTERRUPTED"
+        ) {
+            throw error;
+        }
         console.error("Error in DELETE /api/friends/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
-
-export const dynamic = "force-dynamic";

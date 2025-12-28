@@ -39,11 +39,26 @@ export async function getServerSupabaseClient() {
 /**
  * Get Supabase client for API Routes
  * This reads cookies from the request object
+ *
+ * Note: Cookie access is fully lazy - cookies are only accessed when Supabase
+ * actually needs them (e.g., during auth.getUser()), not during client creation.
  */
 export function createServerSupabaseClient(request: NextRequest) {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         throw new Error("Missing Supabase environment variables");
     }
+
+    // Create a lazy getter that only accesses cookies when actually called
+    // This prevents cookie access during client creation/initialization
+    let cookiesCache: ReturnType<NextRequest["cookies"]["getAll"]> | null = null;
+    const getCookiesLazy = () => {
+        // Only access cookies when this function is actually called
+        // This happens when Supabase needs to read cookies (e.g., during auth.getUser())
+        if (cookiesCache === null) {
+            cookiesCache = request.cookies.getAll();
+        }
+        return cookiesCache;
+    };
 
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -51,7 +66,8 @@ export function createServerSupabaseClient(request: NextRequest) {
         {
             cookies: {
                 getAll() {
-                    return request.cookies.getAll();
+                    // Lazy access - only called when Supabase actually needs cookies
+                    return getCookiesLazy();
                 },
                 setAll(cookiesToSet) {
                     // In API routes, we can't set cookies in the request

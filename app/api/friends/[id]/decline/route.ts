@@ -1,3 +1,4 @@
+import { unstable_noStore } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
@@ -9,9 +10,10 @@ export async function POST(
     request: NextRequest,
     { params }: RouteContext<"/api/friends/[id]/decline">
 ) {
+    unstable_noStore(); // Opt out of static generation before accessing dynamic APIs
+
     try {
         const supabase = createServerSupabaseClient(request);
-
         const {
             data: { user },
             error: authError,
@@ -56,9 +58,16 @@ export async function POST(
             message: "Friend request declined",
         });
     } catch (error) {
+        // Re-throw PPR errors (errors with digest 'NEXT_PRERENDER_INTERRUPTED')
+        if (
+            error &&
+            typeof error === "object" &&
+            "digest" in error &&
+            error.digest === "NEXT_PRERENDER_INTERRUPTED"
+        ) {
+            throw error;
+        }
         console.error("Error in POST /api/friends/[id]/decline:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
-
-export const dynamic = "force-dynamic";
