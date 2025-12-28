@@ -10,7 +10,7 @@ import { Alert } from "@ui/molecules/alert";
 import { AuthFooter } from "@ui/molecules/auth-footer";
 import { AuthFormField } from "@ui/molecules/auth-form-field";
 import { AuthHeader } from "@ui/molecules/auth-header";
-import styles from "@ui/organisms/auth-screen.module.scss";
+import styles from "@ui/organisms/auth-screen/auth-screen.module.scss";
 
 export function SignInForm() {
     const router = useRouter();

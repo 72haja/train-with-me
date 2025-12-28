@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { SignUpForm } from "@/app/components/sign-up-form";
-import styles from "@ui/organisms/auth-screen.module.scss";
+import styles from "@ui/organisms/auth-screen/auth-screen.module.scss";
 
 export default function SignUpPage() {
     return (

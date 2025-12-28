@@ -50,35 +50,61 @@ export default function App() {
         }
     };
 
-    const handleAddToFavorites = async (originId: string, destinationId: string) => {
+    const handleToggleFavorite = async (
+        originId: string,
+        destinationId: string,
+        isCurrentlyFavorite: boolean
+    ) => {
         try {
-            const response = await fetch("/api/favorites", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    originStationId: originId,
-                    destinationStationId: destinationId,
-                }),
-            });
+            if (isCurrentlyFavorite) {
+                // Remove favorite
+                const favorite = favorites.find(
+                    fav =>
+                        fav.originStationId === originId &&
+                        fav.destinationStationId === destinationId
+                );
+                if (favorite) {
+                    const response = await fetch(`/api/favorites/${favorite.id}`, {
+                        method: "DELETE",
+                    });
+                    if (response.ok) {
+                        setFavorites(prev => prev.filter(fav => fav.id !== favorite.id));
+                    }
+                }
+            } else {
+                // Add favorite
+                const response = await fetch("/api/favorites", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        originStationId: originId,
+                        destinationStationId: destinationId,
+                    }),
+                });
 
-            if (response.ok) {
-                const data = await response.json();
-                setFavorites(prev => [...prev, data.favorite]);
-            } else if (response.status === 409) {
-                // Favorite already exists, reload favorites to get the current state
-                await loadFavorites();
+                if (response.ok) {
+                    const data = await response.json();
+                    setFavorites(prev => [...prev, data.favorite]);
+                } else if (response.status === 409) {
+                    // Favorite already exists, reload favorites to get the current state
+                    await loadFavorites();
+                }
             }
         } catch (error) {
-            console.error("Failed to add favorite:", error);
+            console.error("Failed to toggle favorite:", error);
         }
     };
 
-    const isFavorite = (originId: string, destinationId: string) => {
-        return favorites.some(
+    const getFavorite = (originId: string, destinationId: string) => {
+        return favorites.find(
             fav => fav.originStationId === originId && fav.destinationStationId === destinationId
         );
+    };
+
+    const isFavorite = (originId: string, destinationId: string) => {
+        return getFavorite(originId, destinationId) !== undefined;
     };
 
     const handleSelectConnection = (connection: Connection) => {
@@ -188,7 +214,7 @@ export default function App() {
                             onSelectConnection={handleSelectConnection}
                             onBack={handleBack}
                             userConnectionId={userConnectionId}
-                            onAddToFavorites={handleAddToFavorites}
+                            onToggleFavorite={handleToggleFavorite}
                             isFavorite={isFavorite}
                         />
                     </motion.div>
@@ -207,6 +233,15 @@ export default function App() {
                             onConfirmPresence={handleConfirmPresence}
                             onRemovePresence={handleRemovePresence}
                             isUserOnConnection={userConnectionId === selectedConnection.id}
+                            onToggleFavorite={handleToggleFavorite}
+                            isFavorite={
+                                selectedConnection
+                                    ? isFavorite(
+                                          selectedConnection.departure.station.id,
+                                          selectedConnection.arrival.station.id
+                                      )
+                                    : false
+                            }
                         />
                     </motion.div>
                 )}

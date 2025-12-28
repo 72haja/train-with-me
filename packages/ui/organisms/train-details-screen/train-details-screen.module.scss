@@ -1,0 +1,317 @@
+.container {
+    background-color: var(--color-background);
+    padding-bottom: var(--spacing-lg);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    position: relative;
+}
+
+.backButton {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    transition: background-color var(--transition-fast);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-background);
+    width: 2.5rem;
+    height: 2.5rem;
+
+    &:hover {
+        background-color: var(--color-border-light);
+    }
+}
+
+.backButtonIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-primary);
+}
+
+.headerInfo {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--spacing-md);
+    min-width: 0;
+}
+
+.lineBadge {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-xl);
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.lineNumber {
+    color: white;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+}
+
+.headerText {
+    flex: 1;
+    min-width: 0;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xl);
+    min-width: 0;
+}
+
+.station {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.arrow {
+    flex-shrink: 0;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-base);
+}
+
+.headerSubtitle {
+    margin-top: 0.125rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+}
+
+.infoCard {
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-surface);
+    padding: var(--spacing-lg);
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.infoLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.infoIcon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.infoValue {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.delay {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+}
+
+.route {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: var(--spacing-lg);
+}
+
+.routeTitle {
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text-primary);
+}
+
+.stops {
+    display: flex;
+    flex-direction: column;
+}
+
+.stop {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.stopTimeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 0.25rem;
+}
+
+.stopDot {
+    flex-shrink: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--color-border);
+
+    &.stopDotActive {
+        fill: currentColor;
+        color: var(--color-text-primary);
+    }
+}
+
+.stopLine {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    background-color: var(--color-border);
+    width: 2px;
+    height: 1.5rem;
+}
+
+.stopInfo {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: var(--spacing-sm);
+    min-width: 0;
+}
+
+.stopName {
+    flex: 1;
+    padding-top: 0.125rem;
+    min-width: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+
+    &.stopNameActive {
+        color: var(--color-text-primary);
+        font-weight: var(--font-weight-medium);
+    }
+}
+
+.stopTime {
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+.actionSection {
+    margin-top: var(--spacing-sm);
+}
+
+.actionButton {
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-primary);
+    padding: var(--spacing-md) var(--spacing-lg);
+    width: 100%;
+    color: var(--color-text-inverse);
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &.active {
+        box-shadow: 0 4px 12px rgba(255, 213, 0, 0.3);
+        background-color: var(--color-accent);
+        color: var(--color-primary);
+    }
+}
+
+.friendsCard {
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-surface);
+    padding: var(--spacing-lg);
+}
+
+.friendsHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.friendsIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-primary);
+}
+
+.friendsTitle {
+    color: var(--color-text-primary);
+}
+
+.friendsList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.emptyState {
+    padding: var(--spacing-xl) 0;
+    text-align: center;
+}
+
+.emptyIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto var(--spacing-md);
+    border-radius: 50%;
+    background-color: var(--color-background);
+    width: 3rem;
+    height: 3rem;
+}
+
+.emptyIconSvg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-text-tertiary);
+}
+
+.emptyText {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+}
