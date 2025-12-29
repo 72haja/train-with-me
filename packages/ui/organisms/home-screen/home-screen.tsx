@@ -10,7 +10,7 @@ import styles from "./home-screen.module.scss";
 
 interface HomeScreenProps {
     onNavigateToSelection: () => void;
-    onSearchRoute?: (originId: string, destinationId: string) => void;
+    onSearchRoute?: (originId: string, destinationId: string, departureTime: string) => void;
     searchLoading?: boolean;
 }
 

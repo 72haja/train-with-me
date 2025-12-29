@@ -152,7 +152,7 @@ export default function App() {
         }
     };
 
-    const handleSearchRoute = (originId: string, destinationId: string) => {
+    const handleSearchRoute = (originId: string, destinationId: string, departureTime: string) => {
         setSearchLoading(true);
 
         // Reload favorites when searching to ensure they're up to date
@@ -161,6 +161,7 @@ export default function App() {
         }
 
         // Simulate API call delay
+        // In a real implementation, departureTime would be used to filter connections
         setTimeout(() => {
             const results = searchConnections(originId, destinationId);
             setConnections(results);
