@@ -37,6 +37,8 @@ export async function GET(_request: NextRequest) {
             userId: fav.user_id,
             originStationId: fav.origin_station_id,
             destinationStationId: fav.destination_station_id,
+            originStationName: fav.origin_station_name,
+            destinationStationName: fav.destination_station_name,
             createdAt: fav.created_at,
         }));
 
@@ -75,6 +77,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Fetch station names from the stations API
+        let originStationName: string | null = null;
+        let destinationStationName: string | null = null;
+
+        try {
+            // Use the internal stations API to fetch station names
+            const { findStationById } = await import("@apis/mobidata/stations");
+            const [originStation, destinationStation] = await Promise.all([
+                findStationById(originStationId),
+                findStationById(destinationStationId),
+            ]);
+            originStationName = originStation?.name || null;
+            destinationStationName = destinationStation?.name || null;
+        } catch (error) {
+            console.error("Failed to fetch station names:", error);
+            // Continue without station names - they can be updated later
+        }
+
         // Check if favorite already exists
         const { data: existing } = await supabase
             .from("favorite_connections")
@@ -88,13 +108,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Favorite already exists" }, { status: 409 });
         }
 
-        // Insert favorite
+        // Insert favorite with station names
         const { data, error } = await supabase
             .from("favorite_connections")
             .insert({
                 user_id: user.id,
                 origin_station_id: originStationId,
                 destination_station_id: destinationStationId,
+                origin_station_name: originStationName,
+                destination_station_name: destinationStationName,
             })
             .select()
             .single();
@@ -110,6 +132,8 @@ export async function POST(request: NextRequest) {
             userId: data.user_id,
             originStationId: data.origin_station_id,
             destinationStationId: data.destination_station_id,
+            originStationName: data.origin_station_name,
+            destinationStationName: data.destination_station_name,
             createdAt: data.created_at,
         };
 
