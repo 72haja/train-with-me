@@ -21,22 +21,29 @@ export function FavoriteConnections({
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        async function loadFavorites() {
+            try {
+                const response = await fetch("/api/favorites");
+                if (response.ok) {
+                    const data = await response.json();
+                    setFavorites(data.favorites || []);
+                } else {
+                    console.error(
+                        "Failed to load favorites:",
+                        response.status,
+                        response.statusText
+                    );
+                    setFavorites([]);
+                }
+            } catch (error) {
+                console.error("Failed to load favorites:", error);
+                setFavorites([]);
+            } finally {
+                setLoading(false);
+            }
+        }
         loadFavorites();
     }, []);
-
-    const loadFavorites = async () => {
-        try {
-            const response = await fetch("/api/favorites");
-            if (response.ok) {
-                const data = await response.json();
-                setFavorites(data.favorites || []);
-            }
-        } catch (error) {
-            console.error("Failed to load favorites:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();

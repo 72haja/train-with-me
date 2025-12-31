@@ -1,8 +1,8 @@
 /**
  * API functions for GTFS routes endpoint
  */
-import { mobidataClient } from "../client";
-import type { Route } from "../types";
+import { mobidataClient } from "@apis/mobidata/client";
+import type { Route } from "@apis/mobidata/types";
 
 /**
  * Get all routes or filter by parameters
@@ -42,4 +42,3 @@ export const getRouteById = async (routeId: string): Promise<Route | null> => {
 
     return routes[0] || null;
 };
-

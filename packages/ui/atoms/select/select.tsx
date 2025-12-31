@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown } from "lucide-react";
 import clsx from "clsx";
+import { ChevronDown } from "lucide-react";
 import styles from "./select.module.scss";
 
 export interface SelectOption {

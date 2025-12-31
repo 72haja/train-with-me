@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "@apis/hooks/useSession";
 import type { Connection, DbFavoriteConnection } from "@/packages/types/lib/types";
+import { useSession } from "@apis/hooks/useSession";
 import { searchConnections } from "@apis/mobidata";
 import { LoadingSpinner } from "@ui/atoms/loading-spinner";
 import { TrainSelectionScreen } from "@ui/organisms/train-selection-screen";
@@ -17,7 +17,7 @@ export default function ConnectionsPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, loading: authLoading } = useSession();
-    
+
     const [connections, setConnections] = useState<Connection[]>([]);
     const [loading, setLoading] = useState(true);
     const [favorites, setFavorites] = useState<DbFavoriteConnection[]>([]);
@@ -52,6 +52,22 @@ export default function ConnectionsPage() {
 
     // Perform search when params are available
     useEffect(() => {
+        const performSearch = async () => {
+            if (!originId || !destinationId || !date || !time) return;
+
+            setLoading(true);
+            try {
+                // Combine date and time into ISO 8601 format
+                const departureTime = new Date(`${date}T${time}`).toISOString();
+                const results = await searchConnections(originId, destinationId, departureTime);
+                setConnections(results);
+            } catch (error) {
+                console.error("Failed to search connections:", error);
+                setConnections([]);
+            } finally {
+                setLoading(false);
+            }
+        };
         if (user && originId && destinationId && date && time) {
             performSearch();
         }
@@ -66,23 +82,6 @@ export default function ConnectionsPage() {
             }
         } catch (error) {
             console.error("Failed to load favorites:", error);
-        }
-    };
-
-    const performSearch = async () => {
-        if (!originId || !destinationId || !date || !time) return;
-
-        setLoading(true);
-        try {
-            // Combine date and time into ISO 8601 format
-            const departureTime = new Date(`${date}T${time}`).toISOString();
-            const results = await searchConnections(originId, destinationId, departureTime);
-            setConnections(results);
-        } catch (error) {
-            console.error("Failed to search connections:", error);
-            setConnections([]);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -175,4 +174,3 @@ export default function ConnectionsPage() {
         </div>
     );
 }
-

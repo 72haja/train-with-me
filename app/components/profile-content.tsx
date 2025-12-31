@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { updateEmail, updatePassword, updateProfile } from "@/app/actions/profile";
+import styles from "@/app/profile/page.module.scss";
 import { useSession } from "@apis/hooks/useSession";
 import { getSupabaseClient } from "@apis/supabase/client";
 import { Alert } from "@ui/molecules/alert";
@@ -11,7 +12,6 @@ import { AvatarUploadSection } from "@ui/molecules/avatar-upload-section";
 import { EmailFormSection } from "@ui/molecules/email-form-section";
 import { PasswordFormSection } from "@ui/molecules/password-form-section";
 import { ProfileFormSection } from "@ui/molecules/profile-form-section";
-import styles from "@/app/profile/page.module.scss";
 
 export function ProfileContent() {
     const router = useRouter();

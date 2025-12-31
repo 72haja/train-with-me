@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { clsx } from "clsx";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import styles from "./popover.module.scss";
 
 const Popover = PopoverPrimitive.Root;
@@ -26,4 +26,3 @@ const PopoverContent = React.forwardRef<
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
 export { Popover, PopoverTrigger, PopoverContent };
-

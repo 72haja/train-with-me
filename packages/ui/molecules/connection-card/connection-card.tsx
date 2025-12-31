@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { clsx } from "clsx";
 import { format, parseISO } from "date-fns";
 import { Clock, MapPin, Users } from "lucide-react";
 import { motion } from "motion/react";
 import type { Connection } from "@/packages/types/lib/types";
 import { FavoriteButton } from "@ui/atoms/favorite-button";
-import { clsx } from "clsx";
 import { FriendAvatarGroup } from "@ui/molecules/friend-avatar-group";
 import styles from "./connection-card.module.scss";
 

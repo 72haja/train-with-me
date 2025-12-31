@@ -1,8 +1,8 @@
 /**
  * API functions for GTFS connections endpoint
  */
-import { mobidataClient } from "../client";
-import type { Connection, ConnectionsQueryParams } from "../types";
+import { mobidataClient } from "@apis/mobidata/client";
+import type { Connection, ConnectionsQueryParams } from "@apis/mobidata/types";
 
 /**
  * Get connections between stops
@@ -35,4 +35,3 @@ export const getConnectionById = async (connectionId: string): Promise<Connectio
 
     return connections[0] || null;
 };
-

@@ -16,9 +16,9 @@
 
 .headerContent {
     display: flex;
+    position: relative;
     align-items: center;
     gap: var(--spacing-md);
-    position: relative;
 }
 
 .backButton {
@@ -77,10 +77,10 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
+    min-width: 0;
     overflow: hidden;
     color: var(--color-text-primary);
     font-size: var(--font-size-xl);
-    min-width: 0;
 }
 
 .station {
