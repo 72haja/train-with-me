@@ -26,16 +26,23 @@ export const mobidataClient = async <T>(
     }
 
     try {
-        const response = await fetch(url.toString(), {
+        const fetchOptions: RequestInit & { next?: { tags: string[] } } = {
             method,
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
             },
-            next: {
+        };
+
+        // Add Next.js cache tags if provided
+        if (nextTags.length > 0) {
+            fetchOptions.next = {
                 tags: ["mobidata", ...nextTags],
-            },
-        });
+            };
+        }
+        console.log("url.toString()", url.toString());
+
+        const response = await fetch(url.toString(), fetchOptions);
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -50,4 +57,3 @@ export const mobidataClient = async <T>(
         throw error;
     }
 };
-

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import type { Connection, DbFavoriteConnection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { searchConnections } from "@apis/mobidata";
 import { LoadingSpinner } from "@ui/atoms/loading-spinner";
-import { TrainSelectionScreen } from "@ui/organisms/train-selection-screen";
+import { ConnectionCard } from "@ui/molecules/connection-card";
 import styles from "./page.module.scss";
 
 /**
@@ -43,7 +44,7 @@ export default function ConnectionsPage() {
         }
     }, [authLoading, user, originId, destinationId, router]);
 
-    // Load favorites when user is available
+    // Load favorites when user is available (non-blocking)
     useEffect(() => {
         if (user) {
             loadFavorites();
@@ -147,10 +148,10 @@ export default function ConnectionsPage() {
         router.push("/");
     };
 
-    // Show loading spinner while checking auth or performing search
-    if (authLoading || loading || !user) {
+    // Show loading spinner only while checking auth
+    if (authLoading || !user) {
         return (
-            <div className={styles.container}>
+            <div className={styles.loadingContainer}>
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -161,16 +162,58 @@ export default function ConnectionsPage() {
         return null;
     }
 
+    // Show header immediately, then progressive render connections
     return (
         <div className={styles.container}>
-            <TrainSelectionScreen
-                connections={connections}
-                onSelectConnection={handleSelectConnection}
-                onBack={handleBack}
-                userConnectionId={userConnectionId}
-                onToggleFavorite={handleToggleFavorite}
-                isFavorite={isFavorite}
-            />
+            {/* Header - shown immediately */}
+            <header className={styles.header}>
+                <div className={styles.headerContent}>
+                    <button onClick={handleBack} className={styles.backButton} aria-label="Go back">
+                        <ArrowLeft className={styles.backButtonIcon} />
+                    </button>
+                    <div className={styles.headerInfo}>
+                        <h1 className={styles.headerTitle}>Available trains</h1>
+                        <p className={styles.headerSubtitle}>
+                            {date && time ? `${date} · ${time}` : "Loading..."}
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main content - progressive rendering */}
+            <main className={styles.main}>
+                {loading ? (
+                    <div className={styles.loadingState}>
+                        <LoadingSpinner size="lg" />
+                        <p className={styles.loadingText}>Searching connections...</p>
+                    </div>
+                ) : connections.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <p className={styles.emptyText}>No connections found</p>
+                        <p className={styles.emptySubtext}>Try adjusting your search parameters</p>
+                    </div>
+                ) : (
+                    <div className={styles.connections}>
+                        {connections.map(connection => (
+                            <ConnectionCard
+                                key={connection.id}
+                                connection={connection}
+                                onClick={() => handleSelectConnection(connection)}
+                                isActive={userConnectionId === connection.id}
+                                onToggleFavorite={handleToggleFavorite}
+                                isFavorite={
+                                    isFavorite
+                                        ? isFavorite(
+                                              connection.departure.station.id,
+                                              connection.arrival.station.id
+                                          )
+                                        : false
+                                }
+                            />
+                        ))}
+                    </div>
+                )}
+            </main>
         </div>
     );
 }

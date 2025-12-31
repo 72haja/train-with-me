@@ -13,4 +13,5 @@ export interface Station {
         latitude: number;
         longitude: number;
     };
+    locationType?: string;
 }

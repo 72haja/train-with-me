@@ -1,4 +1,121 @@
 .container {
     width: 100%;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-background);
+}
+
+.loadingContainer {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.backButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color var(--transition-fast);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-background);
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--color-border-light);
+    }
+}
+
+.backButtonIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-primary);
+}
+
+.headerInfo {
+    flex: 1;
+}
+
+.headerTitle {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin: 0;
+}
+
+.headerSubtitle {
+    margin-top: 0.125rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.main {
+    padding: var(--spacing-lg);
+    flex: 1;
+}
+
+.connections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.loadingState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl) 0;
+    min-height: 20rem;
+}
+
+.loadingText {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl) 0;
+    min-height: 20rem;
+}
+
+.emptyText {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    margin: 0;
+}
+
+.emptySubtext {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
 }

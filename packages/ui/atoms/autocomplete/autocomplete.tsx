@@ -33,7 +33,6 @@ export function Autocomplete({
 }: AutocompleteProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState(value?.label || "");
-    const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>(options);
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -48,20 +47,6 @@ export function Autocomplete({
             });
         }
     }, [value]);
-
-    useEffect(() => {
-        if (onSearch) {
-            onSearch(searchQuery);
-        } else {
-            // Default filtering
-            const filtered = options.filter(
-                option =>
-                    option.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    option.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredOptions(filtered);
-        }
-    }, [searchQuery, options, onSearch]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -80,6 +65,9 @@ export function Autocomplete({
         setIsOpen(true);
         if (!query) {
             onChange(null);
+        }
+        if (onSearch) {
+            onSearch(query);
         }
     };
 
@@ -126,9 +114,9 @@ export function Autocomplete({
                     </button>
                 )}
             </div>
-            {isOpen && filteredOptions.length > 0 && (
+            {isOpen && options.length > 0 && (
                 <div className={styles.dropdown}>
-                    {filteredOptions.map(option => (
+                    {options.map(option => (
                         <button
                             key={option.id}
                             type="button"
@@ -146,7 +134,7 @@ export function Autocomplete({
                     ))}
                 </div>
             )}
-            {isOpen && searchQuery && filteredOptions.length === 0 && (
+            {isOpen && searchQuery && options.length === 0 && (
                 <div className={styles.dropdown}>
                     <div className={styles.noResults}>No results found</div>
                 </div>

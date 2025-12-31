@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import { clsx } from "clsx";
 import { Trash2 } from "lucide-react";
-import { DbFavoriteConnection } from "@/packages/types/lib/types";
-import { findStationById } from "@apis/mockStations";
+import type { DbFavoriteConnection } from "@/packages/types/lib/types";
 import { EmptyTrainIcon } from "@ui/atoms/empty-train-icon";
 import styles from "./favorite-connections.module.scss";
+
+// Extended type to include station names from API response
+type FavoriteWithNames = DbFavoriteConnection & {
+    originStationName?: string | null;
+    destinationStationName?: string | null;
+};
 
 interface FavoriteConnectionsProps {
     onSelectFavorite: (originId: string, destinationId: string) => void;
@@ -17,7 +22,7 @@ export function FavoriteConnections({
     onSelectFavorite,
     className = "",
 }: FavoriteConnectionsProps) {
-    const [favorites, setFavorites] = useState<DbFavoriteConnection[]>([]);
+    const [favorites, setFavorites] = useState<FavoriteWithNames[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -59,7 +64,7 @@ export function FavoriteConnections({
         }
     };
 
-    const handleClick = (favorite: DbFavoriteConnection) => {
+    const handleClick = (favorite: FavoriteWithNames) => {
         onSelectFavorite(favorite.originStationId, favorite.destinationStationId);
     };
 
@@ -83,30 +88,24 @@ export function FavoriteConnections({
                 ) : (
                     <div className={styles.list}>
                         {favorites.map(favorite => {
-                            const originStation = findStationById(favorite.originStationId);
-                            const destinationStation = findStationById(
-                                favorite.destinationStationId
-                            );
-
-                            if (!originStation || !destinationStation) {
-                                return null;
-                            }
-
+                            // Use station names from favorite data, fallback to IDs if not available
+                            const originName =
+                                favorite.originStationName || favorite.originStationId;
+                            const destinationName =
+                                favorite.destinationStationName || favorite.destinationStationId;
                             return (
                                 <div key={favorite.id} className={styles.itemWrapper}>
                                     <button
                                         type="button"
                                         onClick={() => handleClick(favorite)}
                                         className={styles.item}
-                                        aria-label={`Select favorite route from ${originStation.name} to ${destinationStation.name}`}>
+                                        aria-label={`Select favorite route from ${originName} to ${destinationName}`}>
                                         <div className={styles.content}>
                                             <span className={styles.route}>
-                                                <span className={styles.station}>
-                                                    {originStation.name}
-                                                </span>
+                                                <span className={styles.station}>{originName}</span>
                                                 <span className={styles.arrow}>→</span>
                                                 <span className={styles.station}>
-                                                    {destinationStation.name}
+                                                    {destinationName}
                                                 </span>
                                             </span>
                                         </div>

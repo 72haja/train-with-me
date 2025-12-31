@@ -160,6 +160,7 @@ export interface ConnectionsQueryParams {
     limit?: number;
     offset?: number;
     order?: string; // e.g., "t_departure.asc"
+    departure_time?: string; // Format: HH:MM:SS
 }
 
 /**

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSession } from "@apis/hooks/useSession";
 import type { Connection } from "@/packages/types/lib/types";
+import { useSession } from "@apis/hooks/useSession";
 import { LoadingSpinner } from "@ui/atoms/loading-spinner";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
 import styles from "./page.module.scss";
@@ -29,13 +29,9 @@ export default function ConnectionPage() {
     }, [user, authLoading, router]);
 
     // Load connection details
-    useEffect(() => {
-        if (connectionId && user) {
-            loadConnection();
-        }
-    }, [connectionId, user]);
+    const loadConnection = useCallback(async () => {
+        if (!connectionId) return;
 
-    const loadConnection = async () => {
         try {
             setLoading(true);
             // TODO: Replace with actual API call to fetch connection by ID
@@ -56,17 +52,23 @@ export default function ConnectionPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [connectionId, router]);
+
+    useEffect(() => {
+        if (connectionId && user) {
+            loadConnection();
+        }
+    }, [connectionId, user, loadConnection]);
 
     const handleBack = () => {
         router.push("/");
     };
 
-    const handleJoinConnection = async () => {
+    const handleJoinConnection = async (connectionIdParam: string) => {
         if (!connection || !user) return;
 
         try {
-            const response = await fetch(`/api/connections/${connectionId}/join`, {
+            const response = await fetch(`/api/connections/${connectionIdParam}/join`, {
                 method: "POST",
             });
 
@@ -123,12 +125,11 @@ export default function ConnectionPage() {
         <div className={styles.container}>
             <TrainDetailsScreen
                 connection={connection}
-                userConnectionId={userConnectionId}
                 onBack={handleBack}
-                onJoinConnection={handleJoinConnection}
-                onLeaveConnection={handleLeaveConnection}
+                onConfirmPresence={handleJoinConnection}
+                onRemovePresence={handleLeaveConnection}
+                isUserOnConnection={userConnectionId === connection.id}
             />
         </div>
     );
 }
-

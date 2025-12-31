@@ -45,5 +45,7 @@ export interface DbFavoriteConnection {
     userId: string;
     originStationId: string;
     destinationStationId: string;
+    originStationName?: string | null;
+    destinationStationName?: string | null;
     createdAt: string;
 }

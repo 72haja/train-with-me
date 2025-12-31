@@ -9,16 +9,10 @@ import { UserMenu } from "@ui/molecules/user-menu";
 import styles from "./home-screen.module.scss";
 
 interface HomeScreenProps {
-    onNavigateToSelection: () => void;
-    onSearchRoute?: (originId: string, destinationId: string, departureTime: string) => void;
     searchLoading?: boolean;
 }
 
-export function HomeScreen({
-    onNavigateToSelection,
-    onSearchRoute,
-    searchLoading = false,
-}: HomeScreenProps) {
+export function HomeScreen({ searchLoading = false }: HomeScreenProps) {
     const searchFormRef = useRef<RouteSearchFormRef>(null);
 
     const handleFavoriteSelect = (originId: string, destinationId: string) => {
@@ -62,28 +56,14 @@ export function HomeScreen({
                         journey in real-time.
                     </p>
 
-                    {onSearchRoute ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className={styles.searchForm}>
-                            <RouteSearchForm
-                                ref={searchFormRef}
-                                onSearch={onSearchRoute}
-                                loading={searchLoading}
-                            />
-                            <FavoriteConnections onSelectFavorite={handleFavoriteSelect} />
-                        </motion.div>
-                    ) : (
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={onNavigateToSelection}
-                            className={styles.ctaButton}>
-                            Find your train
-                        </motion.button>
-                    )}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className={styles.searchForm}>
+                        <RouteSearchForm ref={searchFormRef} loading={searchLoading} />
+                        <FavoriteConnections onSelectFavorite={handleFavoriteSelect} />
+                    </motion.div>
                 </motion.div>
 
                 <motion.div

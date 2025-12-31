@@ -1,18 +1,18 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import Link from "next/link";
 import { clsx } from "clsx";
 import { format } from "date-fns";
 import { ArrowUpDown, MapPin, Search } from "lucide-react";
-import { mockStations, stationsToOptions } from "@apis/mockStations";
-import { Autocomplete, type AutocompleteOption } from "@ui/atoms/autocomplete";
+import type { AutocompleteOption } from "@ui/atoms/autocomplete";
 import { Button } from "@ui/atoms/button";
 import { DatePicker } from "@ui/molecules/date-picker";
+import { StationAutocomplete } from "@ui/molecules/station-autocomplete";
 import { TimePicker } from "@ui/molecules/time-picker";
 import styles from "./route-search-form.module.scss";
 
 interface RouteSearchFormProps {
-    onSearch: (originId: string, destinationId: string, departureTime: string) => void;
     loading?: boolean;
     className?: string;
     initialOriginId?: string;
@@ -27,11 +27,14 @@ export interface RouteSearchFormRef {
 
 export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormProps>(
     function RouteSearchForm(
-        { onSearch, loading = false, className = "", initialOriginId, initialDestinationId },
+        { loading = false, className = "", initialOriginId, initialDestinationId },
         ref
     ) {
         const [origin, setOrigin] = useState<AutocompleteOption | null>(null);
         const [destination, setDestination] = useState<AutocompleteOption | null>(null);
+        const [stations, setStations] = useState<
+            Array<{ id: string; name: string; city?: string }>
+        >([]);
 
         const getDefaultTime = () => {
             const now = new Date();
@@ -50,39 +53,34 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
         const [date, setDate] = useState<Date | undefined>(getDefaultDate());
         const [time, setTime] = useState<string>(getDefaultTime());
 
-        // Set initial values from props
+        // Load all stations for ref methods (setOrigin, setDestination, setRoute)
         useEffect(() => {
-            if (initialOriginId) {
-                const station = mockStations.find(s => s.id === initialOriginId);
-                if (station) {
-                    setOrigin({ id: station.id, label: station.name, subtitle: station.city });
+            async function loadAllStations() {
+                try {
+                    const response = await fetch("/api/stations");
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            setStations(result.data);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to load stations:", error);
                 }
             }
-        }, [initialOriginId]);
-
-        useEffect(() => {
-            if (initialDestinationId) {
-                const station = mockStations.find(s => s.id === initialDestinationId);
-                if (station) {
-                    setDestination({
-                        id: station.id,
-                        label: station.name,
-                        subtitle: station.city,
-                    });
-                }
-            }
-        }, [initialDestinationId]);
+            loadAllStations();
+        }, []);
 
         // Expose methods via ref
         useImperativeHandle(ref, () => ({
             setOrigin: (originId: string) => {
-                const station = mockStations.find(s => s.id === originId);
+                const station = stations.find(s => s.id === originId);
                 if (station) {
                     setOrigin({ id: station.id, label: station.name, subtitle: station.city });
                 }
             },
             setDestination: (destinationId: string) => {
-                const station = mockStations.find(s => s.id === destinationId);
+                const station = stations.find(s => s.id === destinationId);
                 if (station) {
                     setDestination({
                         id: station.id,
@@ -92,8 +90,8 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                 }
             },
             setRoute: (originId: string, destinationId: string) => {
-                const originStation = mockStations.find(s => s.id === originId);
-                const destinationStation = mockStations.find(s => s.id === destinationId);
+                const originStation = stations.find(s => s.id === originId);
+                const destinationStation = stations.find(s => s.id === destinationId);
                 if (originStation) {
                     setOrigin({
                         id: originStation.id,
@@ -111,18 +109,6 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
             },
         }));
 
-        const stationOptionsStart = stationsToOptions(mockStations, destination?.id);
-        const stationOptionsDestination = stationsToOptions(mockStations, origin?.id);
-
-        const handleSearch = () => {
-            if (origin && destination && date) {
-                // Combine date and time into ISO 8601 format
-                const dateStr = format(date, "yyyy-MM-dd");
-                const departureTime = new Date(`${dateStr}T${time}`).toISOString();
-                onSearch(origin.id, destination.id, departureTime);
-            }
-        };
-
         const handleSwap = () => {
             const temp = origin;
             setOrigin(destination);
@@ -131,6 +117,21 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
 
         const canSearch = origin && destination && origin.id !== destination.id;
 
+        // Build the search URL with query params
+        const searchHref = useMemo(() => {
+            if (!canSearch || !date) return "#";
+
+            const dateStr = format(date, "yyyy-MM-dd");
+            const params = new URLSearchParams({
+                origin: origin.id,
+                destination: destination.id,
+                date: dateStr,
+                time: time,
+            });
+
+            return `/connections?${params.toString()}`;
+        }, [origin, destination, date, time, canSearch]);
+
         return (
             <div className={clsx(styles.form, className)}>
                 <div className={styles.fields}>
@@ -138,11 +139,12 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                         <MapPin className={styles.locationIcon} />
                         <label className={styles.fieldLabel}>Start</label>
                         <div className={styles.autocompleteWrapper}>
-                            <Autocomplete
-                                options={stationOptionsStart}
+                            <StationAutocomplete
                                 value={origin}
                                 onChange={setOrigin}
                                 placeholder="Von..."
+                                excludeStationId={destination?.id}
+                                initialStationId={initialOriginId}
                             />
                         </div>
                     </div>
@@ -153,11 +155,12 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                         <MapPin className={styles.locationIcon} />
                         <label className={styles.fieldLabel}>Ziel</label>
                         <div className={styles.autocompleteWrapper}>
-                            <Autocomplete
-                                options={stationOptionsDestination}
+                            <StationAutocomplete
                                 value={destination}
                                 onChange={setDestination}
                                 placeholder="Nach..."
+                                excludeStationId={origin?.id}
+                                initialStationId={initialDestinationId}
                             />
                         </div>
                     </div>
@@ -181,18 +184,31 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                     </div>
                 </div>
 
-                <Button
-                    type="button"
-                    onClick={handleSearch}
-                    variant="primary"
-                    size="lg"
-                    fullWidth
-                    disabled={!canSearch || loading}
-                    loading={loading}
-                    className={styles.searchButton}>
-                    <Search className={styles.searchButtonIcon} />
-                    Verbindungen suchen
-                </Button>
+                {canSearch && !loading ? (
+                    <Link
+                        href={searchHref}
+                        className={clsx(
+                            styles.searchButton,
+                            styles.searchButtonLink,
+                            styles.searchButtonPrimary,
+                            styles.searchButtonLg,
+                            styles.searchButtonFullWidth
+                        )}>
+                        <Search className={styles.searchButtonIcon} />
+                        Verbindungen suchen
+                    </Link>
+                ) : (
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        fullWidth
+                        disabled={!canSearch || loading}
+                        loading={loading}
+                        className={styles.searchButton}>
+                        <Search className={styles.searchButtonIcon} />
+                        Verbindungen suchen
+                    </Button>
+                )}
             </div>
         );
     }

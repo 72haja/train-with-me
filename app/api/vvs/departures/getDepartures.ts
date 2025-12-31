@@ -5,10 +5,7 @@
  * Results are cached using Next.js Cache Components.
  */
 import { cacheLife } from "next/cache";
-import { mockConnections } from "@apis/mockData";
-
-// import { fetchDeparturesFromVVS } from '@/packages/apis/vvs/api';
-// import { getFriendsOnConnection } from '@/packages/apis/supabase/queries';
+import { getDeparturesFromStation } from "@apis/mobidata";
 
 export async function getDepartures(stationId: string, limit: number) {
     "use cache";
@@ -16,16 +13,28 @@ export async function getDepartures(stationId: string, limit: number) {
     // Cache key includes both stationId and limit for proper cache isolation
     cacheLife({ revalidate: 30 });
 
-    // For now, return mock data
-    const connections = mockConnections.slice(0, limit);
+    try {
+        const connections = await getDeparturesFromStation(stationId, limit);
 
-    return {
-        success: true,
-        data: connections,
-        meta: {
-            stationId,
-            count: connections.length,
-            timestamp: new Date().toISOString(),
-        },
-    };
+        return {
+            success: true,
+            data: connections,
+            meta: {
+                stationId,
+                count: connections.length,
+                timestamp: new Date().toISOString(),
+            },
+        };
+    } catch (error) {
+        console.error("Error fetching departures:", error);
+        return {
+            success: false,
+            data: [],
+            meta: {
+                stationId,
+                count: 0,
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
 }
