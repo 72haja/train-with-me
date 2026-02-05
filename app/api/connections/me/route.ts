@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * Returns the list of connection IDs the current user has joined (and not left).
  */
 export async function GET(_request: NextRequest) {
+    await connection();
     try {
         const supabase = await createServerSupabaseClient();
 

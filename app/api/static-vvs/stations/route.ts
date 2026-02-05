@@ -2,10 +2,11 @@
  * GET /api/static-vvs/stations – list stations from static data.
  * Optional query: ?q=... to filter by name.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 import { staticVvsMockData } from "@apis/static-vvs/data/mock-data";
 
 export async function GET(request: NextRequest) {
+    await connection();
     try {
         let stations = staticVvsMockData.stations ?? [];
         const q = request.nextUrl.searchParams.get("q");

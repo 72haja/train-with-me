@@ -3,10 +3,11 @@
  * Optional query: ?q=... to filter by name or city.
  * Simulates the future real stations API.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { connection, NextRequest, NextResponse } from "next/server";
 import { mockStations, searchStations } from "@apis/mockStations";
 
 export async function GET(request: NextRequest) {
+    await connection();
     try {
         const q = request.nextUrl.searchParams.get("q");
         const stations = q != null && q.trim() !== "" ? searchStations(q.trim()) : mockStations;

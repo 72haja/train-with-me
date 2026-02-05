@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import type { Connection } from "@/packages/types/lib/types";
@@ -45,9 +45,9 @@ function ConnectionDetailLoadingShell({ onBack }: { onBack: () => void }) {
 }
 
 /**
- * Connection detail page - view a specific connection
+ * Inner content: uses useParams (uncached). Must be inside Suspense so the route can prerender.
  */
-export default function ConnectionPage() {
+function ConnectionPageContent() {
     const params = useParams();
     const router = useRouter();
     const { user, loading: authLoading } = useSession();
@@ -172,5 +172,20 @@ export default function ConnectionPage() {
                 isUserOnConnection={userConnectionId === connection.id}
             />
         </div>
+    );
+}
+
+/**
+ * Connection detail page - view a specific connection.
+ * Wrapped in Suspense so useParams (uncached data) does not block the route during prerender.
+ */
+export default function ConnectionPage() {
+    return (
+        <Suspense
+            fallback={
+                <ConnectionDetailLoadingShell onBack={() => window.history.back()} />
+            }>
+            <ConnectionPageContent />
+        </Suspense>
     );
 }
