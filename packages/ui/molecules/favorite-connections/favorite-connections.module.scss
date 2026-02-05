@@ -126,3 +126,48 @@
     width: 1rem;
     height: 1rem;
 }
+
+// Skeleton
+.skeletonList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.skeletonRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: var(--spacing-sm);
+}
+
+.skeletonLine {
+    flex: 1;
+    height: 1rem;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-background) 50%,
+        var(--color-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonDelete {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
+    background: var(--color-border);
+}
+
+@keyframes skeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
