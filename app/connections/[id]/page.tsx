@@ -2,11 +2,47 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import type { Connection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
-import { LoadingSpinner } from "@ui/atoms/loading-spinner";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
 import styles from "./page.module.scss";
+
+function ConnectionDetailLoadingShell({ onBack }: { onBack: () => void }) {
+    return (
+        <div className={styles.container}>
+            <header className={styles.loadingHeader}>
+                <div className={styles.loadingHeaderContent}>
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className={styles.loadingBackButton}
+                        aria-label="Go back">
+                        <ArrowLeft className={styles.loadingBackIcon} />
+                    </button>
+                    <div className={styles.loadingHeaderInfo}>
+                        <div className={styles.loadingBadge} aria-hidden />
+                        <div className={styles.loadingHeaderText}>
+                            <p className={styles.loadingTitle}>Loading connection…</p>
+                            <p className={styles.loadingSubtitle}>--:--</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main className={styles.loadingMain} aria-busy="true">
+                <div className={styles.loadingCard}>
+                    <div className={`${styles.loadingCardLine} ${styles.long}`} />
+                    <div className={`${styles.loadingCardLine} ${styles.short}`} />
+                    <div className={`${styles.loadingCardLine} ${styles.long}`} />
+                </div>
+                <div className={styles.loadingButton} />
+                <div className={styles.loadingFriendsCard}>
+                    <div className={styles.loadingFriendsLine} />
+                </div>
+            </main>
+        </div>
+    );
+}
 
 /**
  * Connection detail page - view a specific connection
@@ -28,22 +64,34 @@ export default function ConnectionPage() {
         }
     }, [user, authLoading, router]);
 
-    // Load connection details
+    // Load connection details (static IDs from static-vvs API, others from connections API)
     const loadConnection = useCallback(async () => {
         if (!connectionId) return;
 
+        const url =
+            connectionId.startsWith("static-")
+                ? `/api/static-vvs/connections/${connectionId}`
+                : `/api/connections/${connectionId}`;
+
         try {
             setLoading(true);
-            // TODO: Replace with actual API call to fetch connection by ID
-            // For now, we'll need to implement this endpoint
-            const response = await fetch(`/api/connections/${connectionId}`);
+            const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
                 setConnection(data.connection);
-                setUserConnectionId(data.userConnectionId || null);
+                let userOnConnection = data.userConnectionId ?? null;
+                if (!userOnConnection) {
+                    const meRes = await fetch("/api/connections/me");
+                    if (meRes.ok) {
+                        const me = await meRes.json();
+                        userOnConnection = me.connectionIds?.includes(connectionId)
+                            ? connectionId
+                            : null;
+                    }
+                }
+                setUserConnectionId(userOnConnection);
             } else {
                 console.error("Failed to load connection");
-                // Redirect to home if connection not found
                 router.push("/");
             }
         } catch (error) {
@@ -61,7 +109,7 @@ export default function ConnectionPage() {
     }, [connectionId, user, loadConnection]);
 
     const handleBack = () => {
-        router.push("/");
+        router.back();
     };
 
     const handleJoinConnection = async (connectionIdParam: string) => {
@@ -74,9 +122,7 @@ export default function ConnectionPage() {
 
             if (response.ok) {
                 const data = await response.json();
-                setUserConnectionId(data.connectionId);
-                // Refresh connection data
-                loadConnection();
+                setUserConnectionId(data.connectionId ?? connectionIdParam);
             } else {
                 console.error("Failed to join connection");
             }
@@ -95,7 +141,6 @@ export default function ConnectionPage() {
 
             if (response.ok) {
                 setUserConnectionId(null);
-                // Refresh connection data
                 loadConnection();
             } else {
                 console.error("Failed to leave connection");
@@ -106,11 +151,7 @@ export default function ConnectionPage() {
     };
 
     if (authLoading || loading) {
-        return (
-            <div className={styles.container}>
-                <LoadingSpinner />
-            </div>
-        );
+        return <ConnectionDetailLoadingShell onBack={handleBack} />;
     }
 
     if (!connection) {

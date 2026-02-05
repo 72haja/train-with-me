@@ -3,9 +3,6 @@
  */
 import { getMobidataApiUrl } from "./env";
 
-/**
- * Base function to make requests to the MobiData BW GTFS API
- */
 export const mobidataClient = async <T>(
     endpoint: string,
     method: "GET" | "POST" = "GET",
@@ -26,12 +23,17 @@ export const mobidataClient = async <T>(
     }
 
     try {
-        const fetchOptions: RequestInit & { next?: { tags: string[] } } = {
+        // Match the curl headers exactly - PostgREST is very sensitive to headers
+        const fetchOptions: RequestInit = {
             method,
             headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
+                Accept: "application/json, application/vnd.pgrst.object+json;nulls=stripped, application/vnd.pgrst.object+json, text/csv",
+                Prefer: "", // Empty but present - PostgREST might check for presence
+                Range: "",
+                "Range-Unit": "",
             },
+            // Remove Next.js cache tags - they might be causing issues
+            cache: "no-store", // Force fresh requests, no caching
         };
 
         // Add Next.js cache tags if provided

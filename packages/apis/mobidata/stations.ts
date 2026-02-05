@@ -24,9 +24,14 @@ async function fetchStationsInternal(query: string): Promise<Station[]> {
     // Normalize query for API call
     const searchQuery = query.trim() || undefined;
 
-    // VVS Stuttgart uses region codes 08119 and 08111 in stop IDs
-    // We need to fetch both regions and combine them
-    const vvsRegionCodes = ["08119", "08111"];
+    // VVS Stuttgart uses multiple region codes in stop IDs:
+    // 08111: Stuttgart city
+    // 08115: Böblingen district (includes Herrenberg)
+    // 08116: Esslingen district
+    // 08117: Göppingen district
+    // 08118: Ludwigsburg district
+    // 08119: Rems-Murr district (includes Waiblingen)
+    const vvsRegionCodes = ["08111", "08115", "08116", "08117", "08118", "08119"];
 
     // Fetch stations from both VVS regions
     const allStops: Awaited<ReturnType<typeof getStops>> = [];
@@ -52,11 +57,13 @@ async function fetchStationsInternal(query: string): Promise<Station[]> {
         }
     }
 
-    // Filter to VVS Stuttgart region (stop_id starting with de:08119: or de:08111:)
+    // Filter to VVS Stuttgart region codes
     // This is a safety check in case the API returns other stations
-    const vvsStops = allStops.filter(
-        stop => stop.stop_id.startsWith("de:08119:") || stop.stop_id.startsWith("de:08111:")
-    );
+    const vvsStops = allStops.filter(stop => {
+        const parts = stop.stop_id.split(":");
+        const regionCode = parts.length > 1 ? parts[1] : undefined;
+        return regionCode ? vvsRegionCodes.includes(regionCode) : false;
+    });
 
     // Remove duplicates (in case same station appears in both queries)
     const uniqueStops = Array.from(new Map(vvsStops.map(stop => [stop.stop_id, stop])).values());

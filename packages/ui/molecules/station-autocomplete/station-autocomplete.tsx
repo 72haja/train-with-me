@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Station } from "@/packages/types/lib/types";
-import { stationsToOptions } from "@apis/mobidata/stations";
+import { stationsToOptions } from "@apis/mockStations";
 import { Autocomplete, type AutocompleteOption } from "@ui/atoms/autocomplete";
 
 interface StationAutocompleteProps {
@@ -35,65 +35,56 @@ export function StationAutocomplete({
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [stations, setStations] = useState<Station[]>([]);
 
-    // Load initial station if provided
+    // Load initial station from API if provided
     useEffect(() => {
-        if (initialStationId && !value) {
-            let cancelled = false;
-            async function loadInitialStation() {
-                try {
-                    const response = await fetch("/api/stations");
-                    if (!response.ok) throw new Error("Failed to fetch stations");
-                    const result = await response.json();
-                    if (!cancelled && result.success) {
-                        const station = result.data.find((s: Station) => s.id === initialStationId);
-                        if (station) {
-                            onChange({
-                                id: station.id,
-                                label: station.name,
-                                subtitle: station.city,
-                            });
-                        }
-                    }
-                } catch (error) {
-                    console.error("Failed to load initial station:", error);
+        if (!initialStationId || value) return;
+        let cancelled = false;
+        async function loadInitial() {
+            try {
+                const response = await fetch("/api/stations");
+                if (!response.ok) return;
+                const result = await response.json();
+                if (cancelled || !result.success || !Array.isArray(result.data)) return;
+                const station = result.data.find((s: Station) => s.id === initialStationId);
+                if (station) {
+                    onChange({
+                        id: station.id,
+                        label: station.name,
+                        subtitle: station.city,
+                    });
                 }
+            } catch (error) {
+                console.error("Failed to load initial station:", error);
             }
-            loadInitialStation();
-            return () => {
-                cancelled = true;
-            };
         }
+        loadInitial();
+        return () => {
+            cancelled = true;
+        };
     }, [initialStationId, value, onChange]);
 
-    // Fetch stations when search query changes
+    // Fetch stations from API when search query changes (debounced)
     useEffect(() => {
         let cancelled = false;
-
-        async function fetchStations() {
+        const timeoutId = setTimeout(async () => {
             try {
-                // URL encode the query for the path parameter
-                const encodedQuery = encodeURIComponent(searchQuery);
-                const response = await fetch(`/api/stations/${encodedQuery}`);
+                const url =
+                    searchQuery.trim() === ""
+                        ? "/api/stations"
+                        : `/api/stations?q=${encodeURIComponent(searchQuery.trim())}`;
+                const response = await fetch(url);
                 if (!response.ok) throw new Error("Failed to fetch stations");
                 const result = await response.json();
-                if (!cancelled && result.success) {
+                if (!cancelled && result.success && Array.isArray(result.data)) {
                     setStations(result.data);
                 } else if (!cancelled) {
                     setStations([]);
                 }
             } catch (error) {
                 console.error("Failed to fetch stations:", error);
-                if (!cancelled) {
-                    setStations([]);
-                }
+                if (!cancelled) setStations([]);
             }
-        }
-
-        // Debounce search - only fetch after user stops typing
-        const timeoutId = setTimeout(() => {
-            fetchStations();
         }, 300);
-
         return () => {
             cancelled = true;
             clearTimeout(timeoutId);

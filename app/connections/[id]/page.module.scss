@@ -1,4 +1,169 @@
 .container {
     width: 100%;
     min-height: 100vh;
+    background-color: var(--color-background);
+}
+
+/* Loading shell – same layout as train details, skeletons while connection loads */
+.loadingHeader {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.loadingHeaderContent {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.loadingBackButton {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    transition: background-color var(--transition-fast);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-background);
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--color-border-light);
+    }
+}
+
+.loadingBackIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-primary);
+}
+
+.loadingHeaderInfo {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--spacing-md);
+    min-width: 0;
+}
+
+.loadingBadge {
+    flex-shrink: 0;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-border-light) 50%,
+        var(--color-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: detailSkeletonShimmer 1.2s ease-in-out infinite;
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.loadingHeaderText {
+    flex: 1;
+    min-width: 0;
+}
+
+.loadingTitle {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xl);
+}
+
+.loadingSubtitle {
+    margin: 0.125rem 0 0;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+.loadingMain {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+}
+
+.loadingCard {
+    border-radius: var(--radius-xl);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-lg);
+}
+
+.loadingCardLine {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-border-light) 50%,
+        var(--color-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: detailSkeletonShimmer 1.2s ease-in-out infinite;
+    height: 1rem;
+    margin-bottom: var(--spacing-md);
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    &.short {
+        width: 50%;
+    }
+
+    &.long {
+        width: 100%;
+    }
+}
+
+.loadingButton {
+    border-radius: var(--radius-xl);
+    background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-border-light) 50%,
+        var(--color-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: detailSkeletonShimmer 1.2s ease-in-out infinite;
+    height: 3rem;
+    width: 100%;
+}
+
+.loadingFriendsCard {
+    border-radius: var(--radius-xl);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-lg);
+}
+
+.loadingFriendsLine {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+        90deg,
+        var(--color-border) 25%,
+        var(--color-border-light) 50%,
+        var(--color-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: detailSkeletonShimmer 1.2s ease-in-out infinite;
+    height: 1rem;
+    width: 60%;
+}
+
+@keyframes detailSkeletonShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }

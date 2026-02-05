@@ -89,7 +89,7 @@ export function ConnectionCard({
                             {delay < 0 && <span className={styles.early}>{delay} min</span>}
                             <span className={styles.separator}>·</span>
                             <span className={styles.platform}>
-                                Platform {connection.departure.platform}
+                                Platform {connection.departure.platform || "–"}
                             </span>
                         </div>
 

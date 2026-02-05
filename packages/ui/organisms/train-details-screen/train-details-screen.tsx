@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { clsx } from "clsx";
 import { format, parseISO } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
@@ -15,7 +14,7 @@ interface TrainDetailsScreenProps {
     connection: Connection;
     onBack: () => void;
     onConfirmPresence: (connectionId: string) => void;
-    onRemovePresence: () => void;
+    onRemovePresence: () => void | Promise<void>;
     isUserOnConnection: boolean;
     onToggleFavorite?: (originId: string, destinationId: string, isFavorite: boolean) => void;
     isFavorite?: boolean;
@@ -31,6 +30,7 @@ export function TrainDetailsScreen({
     isFavorite = false,
 }: TrainDetailsScreenProps) {
     const [favoriteLoading, setFavoriteLoading] = useState(false);
+    const [leaving, setLeaving] = useState(false);
     const departureTime = parseISO(connection.departure.scheduledDeparture);
     const delay = connection.departure.delay || 0;
 
@@ -46,6 +46,15 @@ export function TrainDetailsScreen({
             );
         } finally {
             setFavoriteLoading(false);
+        }
+    };
+
+    const handleCancelTrain = async () => {
+        setLeaving(true);
+        try {
+            await onRemovePresence();
+        } finally {
+            setLeaving(false);
         }
     };
 
@@ -96,21 +105,33 @@ export function TrainDetailsScreen({
                     stops={connection.stops}
                 />
 
-                {/* Confirm Presence Button */}
+                {/* Confirm presence or already on train + cancel */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     className={styles.actionSection}>
-                    <button
-                        onClick={() =>
-                            isUserOnConnection
-                                ? onRemovePresence()
-                                : onConfirmPresence(connection.id)
-                        }
-                        className={clsx(styles.actionButton, isUserOnConnection && styles.active)}>
-                        {isUserOnConnection ? "You're on this train" : "I'm taking this train"}
-                    </button>
+                    {isUserOnConnection ? (
+                        <>
+                            <p className={styles.alreadyOnTrainText}>
+                                You are already taking this train
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleCancelTrain}
+                                disabled={leaving}
+                                className={styles.cancelButton}>
+                                {leaving ? "Cancelling…" : "Cancel this train"}
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => onConfirmPresence(connection.id)}
+                            className={styles.actionButton}>
+                            I&apos;m taking this train
+                        </button>
+                    )}
                 </motion.div>
 
                 <FriendsOnTrainSection friends={connection.friends} />

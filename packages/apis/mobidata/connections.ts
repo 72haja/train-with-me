@@ -6,7 +6,9 @@ import type { Connection } from "@/packages/types/lib/types";
 import { PostgrestFilters } from "@apis/mobidata/postgrest";
 import { getConnections } from "./api/connections";
 import { getStops } from "./api/stops";
+import { searchConnectionsByLine } from "./line-based-search";
 import { mapMobidataConnectionToConnection } from "./mappers";
+import { type JourneyPath } from "./trip-graph";
 import type { ConnectionsQueryParams, Connection as MobidataConnection } from "./types";
 
 /**
@@ -191,6 +193,24 @@ export async function searchConnections(
         console.error("Error searching connections:", error);
         return [];
     }
+}
+
+/**
+ * Search connections with multi-hop support (including transfers)
+ *
+ * Uses a line-based approach:
+ * 1. Check which S-Bahn lines serve origin and destination
+ * 2. If same line: Find direct connections
+ * 3. If different lines: Find transfer stations and build transfer journeys
+ */
+export async function searchConnectionsMultiHop(
+    originId: string,
+    destinationId: string,
+    date?: string,
+    _maxTransfers: number = 10
+): Promise<JourneyPath[]> {
+    // Use the simpler line-based search approach
+    return searchConnectionsByLine(originId, destinationId, date);
 }
 
 /**

@@ -1,30 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@apis/supabase/server";
 
 export async function POST(
     _request: NextRequest,
-    { params }: RouteContext<"/api/connections/[id]/join">
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = await params;
-        const connectionId = id;
+        const { id: connectionId } = await params;
 
-        // In production, this would:
-        // 1. Get current user from session
-        // const session = await getServerSession();
-        // if (!session?.user?.id) {
-        //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        // }
+        const supabase = await createServerSupabaseClient();
 
-        // 2. Join connection in Supabase
-        // await joinConnection(session.user.id, connectionId);
+        const {
+            data: { user },
+            error: authError,
+        } = await supabase.auth.getUser();
 
-        // For now, just return success
+        if (authError || !user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { error } = await supabase.from("user_connections").insert({
+            user_id: user.id,
+            connection_id: connectionId,
+        });
+
+        if (error) {
+            console.error("Error joining connection:", error);
+            return NextResponse.json(
+                { error: "Failed to join connection" },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json({
             success: true,
             connectionId,
         });
     } catch (error) {
         console.error("Error joining connection:", error);
-        return NextResponse.json({ error: "Failed to join connection" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to join connection" },
+            { status: 500 }
+        );
     }
 }

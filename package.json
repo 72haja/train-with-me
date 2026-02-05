@@ -23,7 +23,8 @@
         "next": "16.0.8",
         "react": "19.2.1",
         "react-day-picker": "^9.13.0",
-        "react-dom": "19.2.1"
+        "react-dom": "19.2.1",
+        "swr": "^2.4.0"
     },
     "devDependencies": {
         "@becklyn/eslint": "^1.2.1",

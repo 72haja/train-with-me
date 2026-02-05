@@ -53,22 +53,28 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
         const [date, setDate] = useState<Date | undefined>(getDefaultDate());
         const [time, setTime] = useState<string>(getDefaultTime());
 
-        // Load all stations for ref methods (setOrigin, setDestination, setRoute)
+        // Load stations from API (mocked for now, same shape as future real API)
         useEffect(() => {
-            async function loadAllStations() {
+            async function loadStations() {
                 try {
                     const response = await fetch("/api/stations");
                     if (response.ok) {
                         const result = await response.json();
-                        if (result.success) {
-                            setStations(result.data);
+                        if (result.success && Array.isArray(result.data)) {
+                            setStations(
+                                result.data.map((s: { id: string; name: string; city?: string }) => ({
+                                    id: s.id,
+                                    name: s.name,
+                                    city: s.city,
+                                }))
+                            );
                         }
                     }
                 } catch (error) {
                     console.error("Failed to load stations:", error);
                 }
             }
-            loadAllStations();
+            loadStations();
         }, []);
 
         // Expose methods via ref

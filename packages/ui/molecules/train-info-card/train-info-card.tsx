@@ -38,7 +38,7 @@ export function TrainInfoCard({ departureTime, delay = 0, platform, stops }: Tra
                         <MapPin className={styles.infoIcon} />
                         <span>Platform</span>
                     </div>
-                    <p className={styles.infoValue}>{platform}</p>
+                    <p className={styles.infoValue}>{platform || "–"}</p>
                 </div>
             </div>
 

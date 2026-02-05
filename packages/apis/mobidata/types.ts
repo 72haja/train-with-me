@@ -152,6 +152,8 @@ export interface Connection {
 export interface ConnectionsQueryParams {
     connection_id?: string;
     route_id?: string;
+    route_short_name?: string;
+    trip_id?: string;
     from_stop_id?: string;
     to_stop_id?: string;
     from_station_id?: string;

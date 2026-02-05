@@ -1,6 +1,7 @@
 /**
  * Mapping utilities to convert MobiData BW GTFS API types to app types
  */
+import type { Journey } from "@/app/api/connections/search/route";
 import type { Connection, Line, Station, Stop, TransportType } from "@/packages/types/lib/types";
 import type { Connection as MobidataConnection, Stop as MobidataStop } from "./types";
 
@@ -142,5 +143,114 @@ export function mapMobidataConnectionToConnection(
         friends: friends as Connection["friends"],
         status: "on-time", // Default, would need real-time data for actual status
         hasRealTimeData: false, // Would need to check if real-time data is available
+    };
+}
+
+/**
+ * Map Journey (multi-segment journey) to app Connection
+ * Combines multiple segments into a single connection with all stops
+ */
+export function mapJourneyToConnection(
+    journey: Journey,
+    friends: Array<{ id: string; name: string; avatarUrl?: string; isOnline: boolean }> = []
+): Connection {
+    if (journey.segments.length === 0) {
+        throw new Error("Journey must have at least one segment");
+    }
+
+    // Use the first segment's route info for the main line
+    const firstSegment = journey.segments[0];
+    if (!firstSegment) {
+        throw new Error("Journey must have at least one segment");
+    }
+
+    const transportType = mapRouteTypeToTransportType(firstSegment.routeInfo.type);
+    const lineColor = getLineColor(firstSegment.routeInfo.number);
+
+    const line: Line = {
+        id: firstSegment.tripId,
+        number: firstSegment.routeInfo.number,
+        type: transportType,
+        color: lineColor,
+        direction: firstSegment.routeInfo.direction,
+    };
+
+    // Build stops array: use segment.stops when present (e.g. static API), else from segment from/to
+    const stops: Stop[] = [];
+
+    const firstSegmentWithStops = journey.segments[0]?.stops;
+    if (
+        journey.segments.length === 1 &&
+        firstSegmentWithStops &&
+        firstSegmentWithStops.length > 0
+    ) {
+        for (let i = 0; i < firstSegmentWithStops.length; i++) {
+            const s = firstSegmentWithStops[i]!;
+            const isLast = i === firstSegmentWithStops.length - 1;
+            stops.push({
+                station: { id: s.stationId, name: s.name },
+                scheduledDeparture: isLast ? s.arrival : s.departure,
+                platform: s.platform ?? "",
+            });
+        }
+    } else {
+        for (let i = 0; i < journey.segments.length; i++) {
+            const segment = journey.segments[i];
+            if (!segment) continue;
+
+            const isTransfer = segment.isTransfer || false;
+
+            if (i === 0 || isTransfer) {
+                stops.push({
+                    station: {
+                        id: segment.fromStation.id,
+                        name: segment.fromStation.name || segment.fromStation.id,
+                    },
+                    scheduledDeparture: segment.departureTime,
+                    platform: "",
+                });
+            }
+
+            stops.push({
+                station: {
+                    id: segment.toStation.id,
+                    name: segment.toStation.name || segment.toStation.id,
+                },
+                scheduledDeparture: segment.arrivalTime,
+                platform: "",
+            });
+        }
+
+        // Remove duplicate consecutive stops (can happen at transfer points)
+        const uniqueStopsDedup: Stop[] = [];
+        for (let i = 0; i < stops.length; i++) {
+            const current = stops[i];
+            if (!current) continue;
+            const previous = uniqueStopsDedup[uniqueStopsDedup.length - 1];
+            if (!previous || previous.station.id !== current.station.id) {
+                uniqueStopsDedup.push(current);
+            }
+        }
+        stops.length = 0;
+        stops.push(...uniqueStopsDedup);
+    }
+
+    const departure = stops[0];
+    const arrival = stops[stops.length - 1];
+
+    if (!departure || !arrival) {
+        throw new Error("Invalid journey: missing departure or arrival");
+    }
+
+    return {
+        id: journey.id,
+        line,
+        departure,
+        arrival,
+        stops,
+        tripId: firstSegment.tripId, // Use first trip ID as primary
+        friends: friends as Connection["friends"],
+        status: "on-time",
+        hasRealTimeData: false,
     };
 }

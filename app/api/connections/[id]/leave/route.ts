@@ -1,30 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@apis/supabase/server";
 
-export async function DELETE(
+async function handleLeave(
     _request: NextRequest,
-    { params }: RouteContext<"/api/connections/[id]/leave">
+    params: Promise<{ id: string }>
+) {
+    const { id: connectionId } = await params;
+
+    const supabase = await createServerSupabaseClient();
+
+    const {
+        data: { user },
+        error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { error } = await supabase
+        .from("user_connections")
+        .update({ left_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .eq("connection_id", connectionId)
+        .is("left_at", null);
+
+    if (error) {
+        console.error("Error leaving connection:", error);
+        return NextResponse.json(
+            { error: "Failed to leave connection" },
+            { status: 500 }
+        );
+    }
+
+    return NextResponse.json({ success: true, connectionId });
+}
+
+export async function POST(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = await params;
-        const connectionId = id;
-
-        // In production, this would:
-        // 1. Get current user from session
-        // const session = await getServerSession();
-        // if (!session?.user?.id) {
-        //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        // }
-
-        // 2. Leave connection in Supabase
-        // await leaveConnection(session.user.id, connectionId);
-
-        // For now, just return success
-        return NextResponse.json({
-            success: true,
-            connectionId,
-        });
+        return await handleLeave(request, context.params);
     } catch (error) {
         console.error("Error leaving connection:", error);
-        return NextResponse.json({ error: "Failed to leave connection" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to leave connection" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function DELETE(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    try {
+        return await handleLeave(request, context.params);
+    } catch (error) {
+        console.error("Error leaving connection:", error);
+        return NextResponse.json(
+            { error: "Failed to leave connection" },
+            { status: 500 }
+        );
     }
 }
