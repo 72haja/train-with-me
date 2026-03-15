@@ -68,6 +68,7 @@ export function FavoriteButton({
             </button>
             {isOpen && (
                 <div
+                    // eslint-disable-next-line react-hooks/refs -- refs.setFloating is a callback ref setter, not a .current access
                     ref={refs.setFloating}
                     style={floatingStyles}
                     {...getFloatingProps()}

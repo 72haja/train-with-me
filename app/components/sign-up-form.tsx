@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, User } from "lucide-react";
 import { motion } from "motion/react";
@@ -20,14 +20,10 @@ export function SignUpForm() {
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
+    const [error, setError] = useState<string | null>(() => {
         const errorParam = searchParams.get("error");
-        if (errorParam) {
-            setError(decodeURIComponent(errorParam));
-        }
-    }, [searchParams]);
+        return errorParam ? decodeURIComponent(errorParam) : null;
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
