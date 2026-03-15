@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useConnectionsPage } from "@/app/connections/hooks/useConnectionsPage";
 import type { Connection, DbFavoriteConnection } from "@/packages/types/lib/types";
 import { FavoriteButton } from "@ui/atoms/favorite-button";
@@ -33,6 +33,10 @@ export function ConnectionsContent({
         favoriteLoading,
         handleHeaderToggleFavorite,
         joinedConnectionIds,
+        loadEarlier,
+        loadLater,
+        loadingEarlier,
+        loadingLater,
         handleSelectConnection,
         handleBack,
     } = useConnectionsPage({
@@ -96,6 +100,19 @@ export function ConnectionsContent({
                     </div>
                 ) : (
                     <div className={styles.connections}>
+                        <button
+                            type="button"
+                            onClick={loadEarlier}
+                            disabled={loadingEarlier}
+                            className={styles.paginationButton}>
+                            {loadingEarlier ? (
+                                <Loader2 className={styles.paginationSpinner} />
+                            ) : (
+                                <ChevronUp className={styles.paginationIcon} />
+                            )}
+                            Frühere Verbindungen
+                        </button>
+
                         {connections.map(connection => (
                             <ConnectionCard
                                 key={connection.id}
@@ -104,6 +121,19 @@ export function ConnectionsContent({
                                 isActive={joinedConnectionIds?.includes(connection.id) ?? false}
                             />
                         ))}
+
+                        <button
+                            type="button"
+                            onClick={loadLater}
+                            disabled={loadingLater}
+                            className={styles.paginationButton}>
+                            {loadingLater ? (
+                                <Loader2 className={styles.paginationSpinner} />
+                            ) : (
+                                <ChevronDown className={styles.paginationIcon} />
+                            )}
+                            Spätere Verbindungen
+                        </button>
                     </div>
                 )}
             </main>

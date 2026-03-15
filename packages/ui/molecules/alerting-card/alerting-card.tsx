@@ -1,11 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-    ExclamationMarkIcon,
-    LightningIcon,
-    QuestionMarkIcon,
-} from "@ui/atoms/icons";
+import { ExclamationMarkIcon, LightningIcon, QuestionMarkIcon } from "@ui/atoms/icons";
 import styles from "./alerting-card.module.scss";
 
 export type AlertingCardVariant = "error" | "info" | "warning";

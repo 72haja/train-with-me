@@ -22,7 +22,12 @@ interface RouteSearchFormProps {
 export interface RouteSearchFormRef {
     setOrigin: (originId: string) => void;
     setDestination: (destinationId: string) => void;
-    setRoute: (originId: string, destinationId: string) => void;
+    setRoute: (
+        originId: string,
+        destinationId: string,
+        originName?: string,
+        destinationName?: string
+    ) => void;
 }
 
 export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormProps>(
@@ -62,11 +67,13 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                         const result = await response.json();
                         if (result.success && Array.isArray(result.data)) {
                             setStations(
-                                result.data.map((s: { id: string; name: string; city?: string }) => ({
-                                    id: s.id,
-                                    name: s.name,
-                                    city: s.city,
-                                }))
+                                result.data.map(
+                                    (s: { id: string; name: string; city?: string }) => ({
+                                        id: s.id,
+                                        name: s.name,
+                                        city: s.city,
+                                    })
+                                )
                             );
                         }
                     }
@@ -95,23 +102,25 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                     });
                 }
             },
-            setRoute: (originId: string, destinationId: string) => {
+            setRoute: (
+                originId: string,
+                destinationId: string,
+                originName?: string,
+                destinationName?: string
+            ) => {
                 const originStation = stations.find(s => s.id === originId);
                 const destinationStation = stations.find(s => s.id === destinationId);
-                if (originStation) {
-                    setOrigin({
-                        id: originStation.id,
-                        label: originStation.name,
-                        subtitle: originStation.city,
-                    });
-                }
-                if (destinationStation) {
-                    setDestination({
-                        id: destinationStation.id,
-                        label: destinationStation.name,
-                        subtitle: destinationStation.city,
-                    });
-                }
+
+                setOrigin({
+                    id: originId,
+                    label: originStation?.name ?? originName ?? originId,
+                    subtitle: originStation?.city,
+                });
+                setDestination({
+                    id: destinationId,
+                    label: destinationStation?.name ?? destinationName ?? destinationId,
+                    subtitle: destinationStation?.city,
+                });
             },
         }));
 
@@ -151,6 +160,7 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                                 placeholder="Von..."
                                 excludeStationId={destination?.id}
                                 initialStationId={initialOriginId}
+                                trainOnly
                             />
                         </div>
                     </div>
@@ -167,6 +177,7 @@ export const RouteSearchForm = forwardRef<RouteSearchFormRef, RouteSearchFormPro
                                 placeholder="Nach..."
                                 excludeStationId={origin?.id}
                                 initialStationId={initialDestinationId}
+                                trainOnly
                             />
                         </div>
                     </div>

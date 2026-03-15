@@ -1,9 +1,43 @@
 /**
  * Mapping utilities to convert MobiData BW GTFS API types to app types
+ *
+ * @deprecated This module is legacy — the app now uses the DB RIS API via @apis/db.
  */
-import type { Journey } from "@/app/api/connections/search/route";
 import type { Connection, Line, Station, Stop, TransportType } from "@/packages/types/lib/types";
 import type { Connection as MobidataConnection, Stop as MobidataStop } from "./types";
+
+/** Legacy Journey type previously exported from the connections search route */
+interface JourneySegmentStop {
+    stationId: string;
+    name: string;
+    arrival: string;
+    departure: string;
+    platform?: string;
+}
+
+interface JourneySegment {
+    tripId: string;
+    routeInfo: {
+        number: string;
+        type: string;
+        direction: string;
+    };
+    fromStation: { id: string; name: string };
+    toStation: { id: string; name: string };
+    departureTime: string;
+    arrivalTime: string;
+    isTransfer?: boolean;
+    stops?: JourneySegmentStop[];
+}
+
+interface Journey {
+    id: string;
+    segments: JourneySegment[];
+    totalDuration: number;
+    departureTime: string;
+    arrivalTime: string;
+    transferCount: number;
+}
 
 /**
  * Map route_type from GTFS to TransportType

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
+import useSWR from "swr";
 import type { FriendRequest, FriendWithFriendshipId } from "@/packages/types/lib/types";
 import { AddFriendForm } from "@ui/molecules/add-friend-form";
 import { Alert } from "@ui/molecules/alert";
@@ -11,23 +12,37 @@ import { FriendCard } from "@ui/molecules/friend-card";
 import { FriendRequestList } from "@ui/molecules/friend-request-list";
 import styles from "./page.module.scss";
 
+async function fetchFriends(): Promise<FriendWithFriendshipId[]> {
+    const response = await fetch("/api/friends");
+    const data = await response.json();
+    if (response.ok && data.success) return data.data;
+    return [];
+}
+
+async function fetchRequests(): Promise<{ received: FriendRequest[]; sent: FriendRequest[] }> {
+    const response = await fetch("/api/friends/requests");
+    const data = await response.json();
+    if (response.ok && data.success) return data.data;
+    return { received: [], sent: [] };
+}
+
 export default function FriendsPage() {
     const router = useRouter();
-    const [friends, setFriends] = useState<FriendWithFriendshipId[]>([]);
-    const [requests, setRequests] = useState<{ received: FriendRequest[]; sent: FriendRequest[] }>({
-        received: [],
-        sent: [],
-    });
-    const [loading, setLoading] = useState(true);
     const [requestLoading, setRequestLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadFriends();
-        loadRequests();
-    }, []);
+    const {
+        data: friends = [],
+        isLoading: friendsLoading,
+        mutate: mutateFriends,
+    } = useSWR("/api/friends", fetchFriends);
+
+    const {
+        data: requests = { received: [], sent: [] },
+        mutate: mutateRequests,
+    } = useSWR("/api/friends/requests", fetchRequests);
 
     // Auto-dismiss alerts after 10 seconds
     useEffect(() => {
@@ -35,47 +50,19 @@ export default function FriendsPage() {
             const timer = setTimeout(() => {
                 setError(null);
                 setSuccess(null);
-            }, 10000); // 10 seconds
+            }, 10000);
 
             return () => clearTimeout(timer);
         }
     }, [error, success]);
 
-    const loadFriends = async () => {
-        try {
-            const response = await fetch("/api/friends");
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                setFriends(data.data);
-            }
-        } catch (err) {
-            console.error("Error loading friends:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadRequests = async () => {
-        try {
-            const response = await fetch("/api/friends/requests");
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                setRequests(data.data);
-            }
-        } catch (err) {
-            console.error("Error loading requests:", err);
-        }
-    };
-
-    const validateEmail = (email: string): string | null => {
-        if (!email || email.trim() === "") {
+    const validateEmail = (emailValue: string): string | null => {
+        if (!emailValue || emailValue.trim() === "") {
             return "Email address is required";
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.trim())) {
+        if (!emailRegex.test(emailValue.trim())) {
             return "Please enter a valid email address";
         }
 
@@ -87,7 +74,6 @@ export default function FriendsPage() {
         setError(null);
         setSuccess(null);
 
-        // Validate email before submitting
         const emailError = validateEmail(email);
         if (emailError) {
             setError(emailError);
@@ -99,9 +85,7 @@ export default function FriendsPage() {
         try {
             const response = await fetch("/api/friends/request", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email.trim() }),
             });
 
@@ -110,7 +94,7 @@ export default function FriendsPage() {
             if (response.ok && data.success) {
                 setSuccess("Friend request sent!");
                 setEmail("");
-                loadRequests();
+                mutateRequests();
             } else {
                 setError(data.error || "Failed to send friend request");
             }
@@ -128,8 +112,8 @@ export default function FriendsPage() {
             });
 
             if (response.ok) {
-                loadFriends();
-                loadRequests();
+                mutateFriends();
+                mutateRequests();
                 setSuccess("Friend request accepted!");
             } else {
                 setError("Failed to accept friend request");
@@ -146,7 +130,7 @@ export default function FriendsPage() {
             });
 
             if (response.ok) {
-                loadRequests();
+                mutateRequests();
                 setSuccess("Friend request declined");
             } else {
                 setError("Failed to decline friend request");
@@ -167,7 +151,7 @@ export default function FriendsPage() {
             });
 
             if (response.ok) {
-                loadFriends();
+                mutateFriends();
                 setSuccess("Friend removed");
             } else {
                 setError("Failed to remove friend");
@@ -236,7 +220,7 @@ export default function FriendsPage() {
                     transition={{ delay: 0.3 }}
                     className={styles.section}>
                     <h2 className={styles.sectionTitle}>My Friends ({friends.length})</h2>
-                    {loading ? (
+                    {friendsLoading ? (
                         <div className={styles.loading}>Loading...</div>
                     ) : friends.length === 0 ? (
                         <div className={styles.emptyState}>

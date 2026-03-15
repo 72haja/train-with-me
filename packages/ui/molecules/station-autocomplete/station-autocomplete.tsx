@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Station } from "@/packages/types/lib/types";
-import { stationsToOptions } from "@apis/mockStations";
 import { Autocomplete, type AutocompleteOption } from "@ui/atoms/autocomplete";
 
 interface StationAutocompleteProps {
@@ -16,6 +15,8 @@ interface StationAutocompleteProps {
     excludeStationId?: string;
     /** Initial station ID to set as value */
     initialStationId?: string;
+    /** Only show train/S-Bahn/U-Bahn stations */
+    trainOnly?: boolean;
 }
 
 /**
@@ -31,6 +32,7 @@ export function StationAutocomplete({
     className = "",
     excludeStationId,
     initialStationId,
+    trainOnly = false,
 }: StationAutocompleteProps) {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [stations, setStations] = useState<Station[]>([]);
@@ -68,10 +70,15 @@ export function StationAutocomplete({
         let cancelled = false;
         const timeoutId = setTimeout(async () => {
             try {
-                const url =
-                    searchQuery.trim() === ""
-                        ? "/api/stations"
-                        : `/api/stations?q=${encodeURIComponent(searchQuery.trim())}`;
+                const params = new URLSearchParams();
+                if (searchQuery.trim() !== "") {
+                    params.set("q", searchQuery.trim());
+                }
+                if (trainOnly) {
+                    params.set("trainOnly", "true");
+                }
+                const qs = params.toString();
+                const url = qs ? `/api/stations?${qs}` : "/api/stations";
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("Failed to fetch stations");
                 const result = await response.json();
@@ -89,11 +96,17 @@ export function StationAutocomplete({
             cancelled = true;
             clearTimeout(timeoutId);
         };
-    }, [searchQuery]);
+    }, [searchQuery, trainOnly]);
 
     // Convert stations to autocomplete options, excluding the specified station
-    const options = useMemo(() => {
-        return stationsToOptions(stations, excludeStationId);
+    const options: AutocompleteOption[] = useMemo(() => {
+        return stations
+            .filter((s: Station) => s.id !== excludeStationId)
+            .map((s: Station) => ({
+                id: s.id,
+                label: s.name,
+                subtitle: s.city,
+            }));
     }, [stations, excludeStationId]);
 
     const handleSearch = useCallback((query: string) => {

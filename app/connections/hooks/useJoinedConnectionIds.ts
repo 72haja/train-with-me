@@ -11,11 +11,9 @@ async function fetchMyConnectionIds(): Promise<string[]> {
 }
 
 export function useJoinedConnectionIds() {
-    const { data: joinedConnectionIds = [] } = useSWR(
-        "/api/connections/me",
-        fetchMyConnectionIds,
-        { fallbackData: [] }
-    );
+    const { data: joinedConnectionIds = [] } = useSWR("/api/connections/me", fetchMyConnectionIds, {
+        fallbackData: [],
+    });
 
     return joinedConnectionIds;
 }

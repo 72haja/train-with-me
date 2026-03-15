@@ -1,95 +1,94 @@
 /**
- * Mock VVS Station Data
- * This will be replaced with actual API calls when the VVS API is integrated
+ * Mock VVS Station Data (VVS EFA stop IDs)
+ * Default stations shown before user searches via the VVS EFA API
  */
 import type { Station } from "@/packages/types/lib/types";
 import type { AutocompleteOption } from "@ui/atoms/autocomplete";
 
-// Common Stuttgart VVS Stations
 export const mockStations: Station[] = [
     {
-        id: "de:08111:6056",
-        name: "Hauptbahnhof",
-        city: "Stuttgart",
-        vvsId: "5006056",
-        coordinates: { latitude: 48.7838, longitude: 9.1816 },
-    },
-    {
-        id: "de:08111:6118",
-        name: "Universität",
+        id: "5006118",
+        name: "Hauptbahnhof (tief)",
         city: "Stuttgart",
         vvsId: "5006118",
-        coordinates: { latitude: 48.7462, longitude: 9.1058 },
     },
     {
-        id: "de:08111:6088",
+        id: "5006115",
+        name: "Hauptbahnhof (oben)",
+        city: "Stuttgart",
+        vvsId: "5006115",
+    },
+    {
+        id: "5006002",
         name: "Vaihingen",
         city: "Stuttgart",
-        vvsId: "5006088",
-        coordinates: { latitude: 48.7254, longitude: 9.1078 },
+        vvsId: "5006002",
     },
     {
-        id: "de:08115:4512",
-        name: "Herrenberg",
-        city: "Herrenberg",
-        vvsId: "5004512",
-        coordinates: { latitude: 48.5947, longitude: 8.8675 },
-    },
-    {
-        id: "de:08111:6553",
-        name: "Flughafen/Messe",
-        city: "Stuttgart",
-        vvsId: "5006553",
-        coordinates: { latitude: 48.6908, longitude: 9.1966 },
-    },
-    {
-        id: "de:08111:6057",
-        name: "Bad Cannstatt",
-        city: "Stuttgart",
-        vvsId: "5006057",
-        coordinates: { latitude: 48.8069, longitude: 9.2176 },
-    },
-    {
-        id: "de:08111:6071",
-        name: "Rotebühlplatz",
-        city: "Stuttgart",
-        vvsId: "5006071",
-    },
-    {
-        id: "de:08111:6075",
-        name: "Charlottenplatz",
-        city: "Stuttgart",
-        vvsId: "5006075",
-    },
-    {
-        id: "de:08111:6117",
-        name: "Österfeld",
-        city: "Stuttgart",
-        vvsId: "5006117",
-    },
-    {
-        id: "de:08115:4510",
-        name: "Böblingen",
-        city: "Böblingen",
+        id: "5004510",
+        name: "Bondorf",
+        city: "Bondorf",
         vvsId: "5004510",
     },
     {
-        id: "de:08116:3720",
-        name: "Leinfelden",
-        city: "Leinfelden-Echterdingen",
-        vvsId: "5003720",
+        id: "5002183",
+        name: "Herrenberg",
+        city: "Herrenberg",
+        vvsId: "5002183",
     },
     {
-        id: "de:08119:5070",
+        id: "5006553",
+        name: "Flughafen/Messe",
+        city: "Stuttgart",
+        vvsId: "5006553",
+    },
+    {
+        id: "5006057",
+        name: "Bad Cannstatt",
+        city: "Stuttgart",
+        vvsId: "5006057",
+    },
+    {
+        id: "5006056",
+        name: "Stadtmitte",
+        city: "Stuttgart",
+        vvsId: "5006056",
+    },
+    {
+        id: "5007100",
+        name: "Böblingen",
+        city: "Böblingen",
+        vvsId: "5007100",
+    },
+    {
+        id: "5005070",
         name: "Backnang",
         city: "Backnang",
         vvsId: "5005070",
     },
     {
-        id: "de:08118:7418",
-        name: "Gerlingen",
-        city: "Gerlingen",
-        vvsId: "5007418",
+        id: "5003526",
+        name: "Ludwigsburg",
+        city: "Ludwigsburg",
+        vvsId: "5003526",
+    },
+    {
+        id: "5001768",
+        name: "Esslingen(Neckar)",
+        city: "Esslingen",
+        vvsId: "5001768",
+    },
+    {
+        id: "5006333",
+        name: "Waiblingen",
+        city: "Waiblingen",
+        vvsId: "5006333",
+    },
+    {
+        id: "5004673",
+        name: "Plochingen",
+        city: "Plochingen",
+        vvsId: "5004673",
     },
 ];
 

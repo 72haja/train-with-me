@@ -2,7 +2,7 @@
  * Example static data for S1 (simplified).
  * Copy and extend this pattern for other lines and more trips.
  */
-import type { StaticVvsData } from "../types";
+import type { StaticVvsData } from "@apis/static-vvs/types";
 
 // Station IDs aligned with mockStations / real VVS (de:region:stop)
 const HERRENBERG = "de:08115:4512";

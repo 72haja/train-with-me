@@ -7,7 +7,12 @@ import { FavoriteConnectionsSkeleton } from "./favorite-connections-skeleton";
 import styles from "./favorite-connections.module.scss";
 
 interface FavoriteConnectionsProps {
-    onSelectFavorite: (originId: string, destinationId: string) => void;
+    onSelectFavorite: (
+        originId: string,
+        destinationId: string,
+        originName?: string,
+        destinationName?: string
+    ) => void;
     className?: string;
 }
 
@@ -24,9 +29,7 @@ export function FavoriteConnections({
             <h3 className={styles.title}>Favoriten</h3>
             <div className={styles.card}>
                 <Suspense fallback={<FavoriteConnectionsSkeleton />}>
-                    <FavoriteConnectionsContent
-                        onSelectFavorite={onSelectFavorite}
-                    />
+                    <FavoriteConnectionsContent onSelectFavorite={onSelectFavorite} />
                 </Suspense>
             </div>
         </div>

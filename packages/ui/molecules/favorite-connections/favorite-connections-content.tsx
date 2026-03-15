@@ -25,7 +25,12 @@ async function fetchFavorites(): Promise<FavoriteWithNames[]> {
 }
 
 interface FavoriteConnectionsContentProps {
-    onSelectFavorite: (originId: string, destinationId: string) => void;
+    onSelectFavorite: (
+        originId: string,
+        destinationId: string,
+        originName?: string,
+        destinationName?: string
+    ) => void;
     className?: string;
 }
 
@@ -59,7 +64,12 @@ export function FavoriteConnectionsContent({
     };
 
     const handleClick = (favorite: FavoriteWithNames) => {
-        onSelectFavorite(favorite.originStationId, favorite.destinationStationId);
+        onSelectFavorite(
+            favorite.originStationId,
+            favorite.destinationStationId,
+            favorite.originStationName ?? undefined,
+            favorite.destinationStationName ?? undefined
+        );
     };
 
     if (favorites.length === 0) {
@@ -68,8 +78,7 @@ export function FavoriteConnectionsContent({
                 <EmptyTrainIcon />
                 <p className={styles.emptyText}>Noch keine Favoriten</p>
                 <p className={styles.emptySubtext}>
-                    Füge Verbindungen zu deinen Favoriten hinzu, um sie schnell
-                    wiederzufinden
+                    Füge Verbindungen zu deinen Favoriten hinzu, um sie schnell wiederzufinden
                 </p>
             </div>
         );
@@ -78,40 +87,34 @@ export function FavoriteConnectionsContent({
     return (
         <div className={clsx(styles.list, className)}>
             {favorites.map(favorite => {
-                    const originName =
-                        favorite.originStationName || favorite.originStationId;
-                    const destinationName =
-                        favorite.destinationStationName ||
-                        favorite.destinationStationId;
-                    return (
-                        <div key={favorite.id} className={styles.itemWrapper}>
-                            <button
-                                type="button"
-                                onClick={() => handleClick(favorite)}
-                                className={styles.item}
-                                aria-label={`Select favorite route from ${originName} to ${destinationName}`}>
-                                <div className={styles.content}>
-                                    <span className={styles.route}>
-                                        <span className={styles.station}>
-                                            {originName}
-                                        </span>
-                                        <span className={styles.arrow}>→</span>
-                                        <span className={styles.station}>
-                                            {destinationName}
-                                        </span>
-                                    </span>
-                                </div>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={e => handleDelete(favorite.id, e)}
-                                className={styles.deleteButton}
-                                aria-label="Remove favorite">
-                                <Trash2 className={styles.deleteIcon} />
-                            </button>
-                        </div>
-                    );
-                })}
+                const originName = favorite.originStationName || favorite.originStationId;
+                const destinationName =
+                    favorite.destinationStationName || favorite.destinationStationId;
+                return (
+                    <div key={favorite.id} className={styles.itemWrapper}>
+                        <button
+                            type="button"
+                            onClick={() => handleClick(favorite)}
+                            className={styles.item}
+                            aria-label={`Select favorite route from ${originName} to ${destinationName}`}>
+                            <div className={styles.content}>
+                                <span className={styles.route}>
+                                    <span className={styles.station}>{originName}</span>
+                                    <span className={styles.arrow}>→</span>
+                                    <span className={styles.station}>{destinationName}</span>
+                                </span>
+                            </div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={e => handleDelete(favorite.id, e)}
+                            className={styles.deleteButton}
+                            aria-label="Remove favorite">
+                            <Trash2 className={styles.deleteIcon} />
+                        </button>
+                    </div>
+                );
+            })}
         </div>
     );
 }

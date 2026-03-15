@@ -15,4 +15,6 @@ export interface Stop {
     platform: string;
     /** Track/platform changes */
     platformChange?: boolean;
+    /** Whether this is a transfer/change stop between different lines */
+    isTransfer?: boolean;
 }

@@ -245,19 +245,19 @@
 
 .cancelButton {
     transition: all var(--transition-base);
+    cursor: pointer;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     background-color: var(--color-surface);
     padding: var(--spacing-md) var(--spacing-lg);
     width: 100%;
     color: var(--color-text-primary);
-    font-size: var(--font-size-base);
     font-weight: var(--font-weight-medium);
-    cursor: pointer;
+    font-size: var(--font-size-base);
 
     &:hover:not(:disabled) {
-        background-color: var(--color-background);
         border-color: var(--color-text-tertiary);
+        background-color: var(--color-background);
     }
 
     &:disabled {

@@ -6,12 +6,12 @@ When the live VVS/MobiData API is not available, you can serve connections from 
 
 Use these routes to test the model before implementing in Supabase:
 
-| Method | Route | Description |
-|--------|--------|-------------|
-| POST | `/api/static-vvs/connections/search` | Same body as `/api/connections/search` (`originId`, `destinationId`, `date`, `time`). Returns `{ journeys }`. |
-| GET | `/api/static-vvs/lines` | List all lines (S1, S2, …) with directions and station IDs. |
-| GET | `/api/static-vvs/lines/[lineId]` | One line with directions and station names (e.g. `/api/static-vvs/lines/s1`). |
-| GET | `/api/static-vvs/stations` | List stations. Optional `?q=...` to filter by name. |
+| Method | Route                                | Description                                                                                                   |
+| ------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/static-vvs/connections/search` | Same body as `/api/connections/search` (`originId`, `destinationId`, `date`, `time`). Returns `{ journeys }`. |
+| GET    | `/api/static-vvs/lines`              | List all lines (S1, S2, …) with directions and station IDs.                                                   |
+| GET    | `/api/static-vvs/lines/[lineId]`     | One line with directions and station names (e.g. `/api/static-vvs/lines/s1`).                                 |
+| GET    | `/api/static-vvs/stations`           | List stations. Optional `?q=...` to filter by name.                                                           |
 
 **To test the connections page with static data:** point the frontend to `POST /api/static-vvs/connections/search` instead of `/api/connections/search` (e.g. in `app/connections/page.tsx`). Mock data includes S1 (Hbf ↔ Herrenberg) and S2 (Hbf ↔ Flughafen) with several trips.
 
@@ -33,36 +33,44 @@ Use these routes to test the model before implementing in Supabase:
 
 ```ts
 const staticData: StaticVvsData = {
-  lines: [
-    {
-      id: "s1",
-      number: "S1",
-      type: "S-Bahn",
-      color: "#00985f",
-      directions: [
-        { headsign: "Herrenberg",   stationIds: ["de:08115:4512", "de:08111:6056", /* ... */] },
-        { headsign: "Kirchheim (Teck)", stationIds: [/* reverse order */] },
-      ],
-    },
-  ],
-  stations: [
-    { id: "de:08115:4512", name: "Herrenberg" },
-    { id: "de:08111:6056", name: "Stuttgart Hbf" },
-    // ...
-  ],
-  trips: [
-    {
-      tripId: "s1-h-0530",
-      lineId: "s1",
-      directionIndex: 0,
-      stopTimes: [
-        { stationId: "de:08115:4512", arrival: "05:30", departure: "05:30" },
-        { stationId: "de:08115:4xxx", arrival: "05:35", departure: "05:36" },
-        // ... one entry per station in order
-      ],
-    },
-    // more trips for 05:50, 06:10, ...
-  ],
+    lines: [
+        {
+            id: "s1",
+            number: "S1",
+            type: "S-Bahn",
+            color: "#00985f",
+            directions: [
+                {
+                    headsign: "Herrenberg",
+                    stationIds: ["de:08115:4512", "de:08111:6056" /* ... */],
+                },
+                {
+                    headsign: "Kirchheim (Teck)",
+                    stationIds: [
+                        /* reverse order */
+                    ],
+                },
+            ],
+        },
+    ],
+    stations: [
+        { id: "de:08115:4512", name: "Herrenberg" },
+        { id: "de:08111:6056", name: "Stuttgart Hbf" },
+        // ...
+    ],
+    trips: [
+        {
+            tripId: "s1-h-0530",
+            lineId: "s1",
+            directionIndex: 0,
+            stopTimes: [
+                { stationId: "de:08115:4512", arrival: "05:30", departure: "05:30" },
+                { stationId: "de:08115:4xxx", arrival: "05:35", departure: "05:36" },
+                // ... one entry per station in order
+            ],
+        },
+        // more trips for 05:50, 06:10, ...
+    ],
 };
 ```
 

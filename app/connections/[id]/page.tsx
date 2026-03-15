@@ -1,12 +1,53 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import useSWR from "swr";
 import type { Connection } from "@/packages/types/lib/types";
+import { postFetcher } from "@/app/lib/fetcher";
 import { useSession } from "@apis/hooks/useSession";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
 import styles from "./page.module.scss";
+
+async function fetchConnection(
+    connectionId: string,
+    originId: string,
+    destinationId: string,
+    departure: string,
+): Promise<Connection | null> {
+    // 1. Try sessionStorage first (instant, from card click)
+    try {
+        const stored = sessionStorage.getItem(`connection-${connectionId}`);
+        if (stored) return JSON.parse(stored) as Connection;
+    } catch {
+        // ignore
+    }
+
+    // 2. Re-fetch from EFA using search context
+    const data = await postFetcher<{ connections: Connection[] }>(
+        "/api/connections/search",
+        {
+            originId,
+            destinationId,
+            date: departure.split("T")[0],
+            time: departure.split("T")[1]?.slice(0, 5),
+        },
+    );
+
+    const match = (data.connections ?? []).find(c => c.id === connectionId) ?? null;
+
+    // Cache for next time
+    if (match) {
+        try {
+            sessionStorage.setItem(`connection-${connectionId}`, JSON.stringify(match));
+        } catch {
+            // ignore
+        }
+    }
+
+    return match;
+}
 
 function ConnectionDetailLoadingShell({ onBack }: { onBack: () => void }) {
     return (
@@ -49,68 +90,33 @@ function ConnectionDetailLoadingShell({ onBack }: { onBack: () => void }) {
  */
 function ConnectionPageContent() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { user, loading: authLoading } = useSession();
-    const [connection, setConnection] = useState<Connection | null>(null);
-    const [loading, setLoading] = useState(true);
     const [userConnectionId, setUserConnectionId] = useState<string | null>(null);
 
-    const connectionId = params.id as string;
+    const connectionId = decodeURIComponent(params.id as string);
+    const originId = searchParams.get("origin");
+    const destinationId = searchParams.get("destination");
+    const departure = searchParams.get("departure");
 
-    // Redirect to sign in if not authenticated
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.push("/auth/signin");
-        }
-    }, [user, authLoading, router]);
+    const canFetch = !!connectionId && !!originId && !!destinationId && !!departure && !!user;
 
-    // Load connection details (static IDs from static-vvs API, others from connections API)
-    const loadConnection = useCallback(async () => {
-        if (!connectionId) return;
-
-        const url =
-            connectionId.startsWith("static-")
-                ? `/api/static-vvs/connections/${connectionId}`
-                : `/api/connections/${connectionId}`;
-
-        try {
-            setLoading(true);
-            const response = await fetch(url);
-            if (response.ok) {
-                const data = await response.json();
-                setConnection(data.connection);
-                let userOnConnection = data.userConnectionId ?? null;
-                if (!userOnConnection) {
-                    const meRes = await fetch("/api/connections/me");
-                    if (meRes.ok) {
-                        const me = await meRes.json();
-                        userOnConnection = me.connectionIds?.includes(connectionId)
-                            ? connectionId
-                            : null;
-                    }
-                }
-                setUserConnectionId(userOnConnection);
-            } else {
-                console.error("Failed to load connection");
-                router.push("/");
-            }
-        } catch (error) {
-            console.error("Error loading connection:", error);
-            router.push("/");
-        } finally {
-            setLoading(false);
-        }
-    }, [connectionId, router]);
-
-    useEffect(() => {
-        if (connectionId && user) {
-            loadConnection();
-        }
-    }, [connectionId, user, loadConnection]);
+    const { data: connection, isLoading, mutate } = useSWR(
+        canFetch ? ["connection-detail", connectionId] : null,
+        () => fetchConnection(connectionId, originId!, destinationId!, departure!),
+        { revalidateOnFocus: false },
+    );
 
     const handleBack = () => {
         router.back();
     };
+
+    // Redirect if not authenticated
+    if (!authLoading && !user) {
+        router.push("/auth/signin");
+        return null;
+    }
 
     const handleJoinConnection = async (connectionIdParam: string) => {
         if (!connection || !user) return;
@@ -141,7 +147,7 @@ function ConnectionPageContent() {
 
             if (response.ok) {
                 setUserConnectionId(null);
-                loadConnection();
+                mutate();
             } else {
                 console.error("Failed to leave connection");
             }
@@ -150,7 +156,7 @@ function ConnectionPageContent() {
         }
     };
 
-    if (authLoading || loading) {
+    if (authLoading || isLoading) {
         return <ConnectionDetailLoadingShell onBack={handleBack} />;
     }
 
@@ -181,10 +187,7 @@ function ConnectionPageContent() {
  */
 export default function ConnectionPage() {
     return (
-        <Suspense
-            fallback={
-                <ConnectionDetailLoadingShell onBack={() => window.history.back()} />
-            }>
+        <Suspense fallback={<ConnectionDetailLoadingShell onBack={() => window.history.back()} />}>
             <ConnectionPageContent />
         </Suspense>
     );

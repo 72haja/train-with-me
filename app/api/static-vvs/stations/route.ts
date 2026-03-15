@@ -2,7 +2,7 @@
  * GET /api/static-vvs/stations – list stations from static data.
  * Optional query: ?q=... to filter by name.
  */
-import { connection, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, connection } from "next/server";
 import { staticVvsMockData } from "@apis/static-vvs/data/mock-data";
 
 export async function GET(request: NextRequest) {
@@ -19,9 +19,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ stations });
     } catch (error) {
         console.error("Error in /api/static-vvs/stations:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch stations" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to fetch stations" }, { status: 500 });
     }
 }

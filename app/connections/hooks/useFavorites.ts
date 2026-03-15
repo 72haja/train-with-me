@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 import type { DbFavoriteConnection } from "@/packages/types/lib/types";
 
@@ -17,11 +17,7 @@ export function useFavorites(initialFavorites: DbFavoriteConnection[]) {
     );
 
     const toggleFavorite = useCallback(
-        async (
-            originId: string,
-            destinationId: string,
-            isCurrentlyFavorite: boolean
-        ) => {
+        async (originId: string, destinationId: string, isCurrentlyFavorite: boolean) => {
             try {
                 if (isCurrentlyFavorite) {
                     const favorite = favorites.find(
@@ -51,10 +47,9 @@ export function useFavorites(initialFavorites: DbFavoriteConnection[]) {
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        await mutateFavorites(
-                            prev => [...(prev ?? []), data.favorite],
-                            { revalidate: false }
-                        );
+                        await mutateFavorites(prev => [...(prev ?? []), data.favorite], {
+                            revalidate: false,
+                        });
                     } else if (response.status === 409) {
                         await mutateFavorites();
                     }
@@ -70,8 +65,7 @@ export function useFavorites(initialFavorites: DbFavoriteConnection[]) {
         (originId: string, destinationId: string) =>
             favorites.some(
                 fav =>
-                    fav.originStationId === originId &&
-                    fav.destinationStationId === destinationId
+                    fav.originStationId === originId && fav.destinationStationId === destinationId
             ),
         [favorites]
     );
@@ -84,11 +78,7 @@ export function useRouteFavoriteToggle(
     destinationId: string,
     options: {
         isFavorite: (o: string, d: string) => boolean;
-        toggleFavorite: (
-            o: string,
-            d: string,
-            isCurrentlyFavorite: boolean
-        ) => Promise<void>;
+        toggleFavorite: (o: string, d: string, isCurrentlyFavorite: boolean) => Promise<void>;
     }
 ) {
     const [loading, setLoading] = useState(false);

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
-export async function POST(
-    _request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id: connectionId } = await params;
 
@@ -26,10 +23,7 @@ export async function POST(
 
         if (error) {
             console.error("Error joining connection:", error);
-            return NextResponse.json(
-                { error: "Failed to join connection" },
-                { status: 500 }
-            );
+            return NextResponse.json({ error: "Failed to join connection" }, { status: 500 });
         }
 
         return NextResponse.json({
@@ -38,9 +32,6 @@ export async function POST(
         });
     } catch (error) {
         console.error("Error joining connection:", error);
-        return NextResponse.json(
-            { error: "Failed to join connection" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to join connection" }, { status: 500 });
     }
 }

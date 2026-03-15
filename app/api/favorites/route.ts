@@ -82,14 +82,18 @@ export async function POST(request: NextRequest) {
         let destinationStationName: string | null = null;
 
         try {
-            // Use the internal stations API to fetch station names
-            const { findStationById } = await import("@apis/mobidata/stations");
-            const [originStation, destinationStation] = await Promise.all([
-                findStationById(originStationId),
-                findStationById(destinationStationId),
+            // Use the VVS EFA API to fetch station names
+            const { getEfaStation } = await import("@apis/vvs-efa");
+            const [originStation, destinationStation] = await Promise.allSettled([
+                getEfaStation(originStationId),
+                getEfaStation(destinationStationId),
             ]);
-            originStationName = originStation?.name || null;
-            destinationStationName = destinationStation?.name || null;
+            originStationName =
+                originStation.status === "fulfilled" ? (originStation.value?.name ?? null) : null;
+            destinationStationName =
+                destinationStation.status === "fulfilled"
+                    ? (destinationStation.value?.name ?? null)
+                    : null;
         } catch (error) {
             console.error("Failed to fetch station names:", error);
             // Continue without station names - they can be updated later

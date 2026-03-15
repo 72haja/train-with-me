@@ -37,9 +37,6 @@ export async function GET(
         });
     } catch (error) {
         console.error("Error in /api/static-vvs/lines/[lineId]:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch line" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to fetch line" }, { status: 500 });
     }
 }

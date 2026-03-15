@@ -2,11 +2,7 @@
  * Static connection search: find journeys from static VVS data.
  * Returns the same Journey shape as the live API for drop-in testing.
  */
-import type {
-    StaticLineDirection,
-    StaticTrip,
-    StaticVvsData,
-} from "./types";
+import type { StaticLineDirection, StaticTrip, StaticVvsData } from "./types";
 
 /** One stop with times (used when segment has full stop list from static data) */
 export interface JourneySegmentStop {
@@ -102,14 +98,19 @@ export function searchStaticConnections(
             if (originIdx === -1 || destIdx === -1 || originIdx >= destIdx) continue;
 
             const lineTrips = (data.trips ?? []).filter(
-                (t): t is StaticTrip =>
-                    t.lineId === line.id && t.directionIndex === directionIndex
+                (t): t is StaticTrip => t.lineId === line.id && t.directionIndex === directionIndex
             );
 
             for (const trip of lineTrips) {
                 const originIdxInTrip = trip.stopTimes.findIndex(st => st.stationId === originId);
-                const destIdxInTrip = trip.stopTimes.findIndex(st => st.stationId === destinationId);
-                if (originIdxInTrip === -1 || destIdxInTrip === -1 || originIdxInTrip >= destIdxInTrip)
+                const destIdxInTrip = trip.stopTimes.findIndex(
+                    st => st.stationId === destinationId
+                );
+                if (
+                    originIdxInTrip === -1 ||
+                    destIdxInTrip === -1 ||
+                    originIdxInTrip >= destIdxInTrip
+                )
                     continue;
 
                 const originStop = trip.stopTimes[originIdxInTrip]!;
@@ -128,7 +129,8 @@ export function searchStaticConnections(
                     ? toIsoDateTime(datePart, arrTime)
                     : toIsoDateTime("1970-01-01", arrTime);
                 const totalDuration = Math.round(
-                    (new Date(arrDateTime).getTime() - new Date(depDateTime).getTime()) / (1000 * 60)
+                    (new Date(arrDateTime).getTime() - new Date(depDateTime).getTime()) /
+                        (1000 * 60)
                 );
 
                 const baseDate = datePart ?? "1970-01-01";

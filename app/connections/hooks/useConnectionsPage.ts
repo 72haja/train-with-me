@@ -21,10 +21,15 @@ export function useConnectionsPage({
     const router = useRouter();
     const { originId, destinationId, date, time } = searchParams;
 
-    const { connections, isLoading, errorMessage } = useConnectionsSearch(
-        searchParams,
-        initialConnections
-    );
+    const {
+        connections,
+        isLoading,
+        errorMessage,
+        loadEarlier,
+        loadLater,
+        loadingEarlier,
+        loadingLater,
+    } = useConnectionsSearch(searchParams, initialConnections);
 
     const { toggleFavorite, isFavorite } = useFavorites(initialFavorites);
     const routeFavorite = useRouteFavoriteToggle(originId, destinationId, {
@@ -35,7 +40,19 @@ export function useConnectionsPage({
     const joinedConnectionIds = useJoinedConnectionIds();
 
     const handleSelectConnection = (connection: Connection) => {
-        router.push(`/connections/${connection.id}`);
+        // Store the full connection data for the detail page
+        try {
+            sessionStorage.setItem(`connection-${connection.id}`, JSON.stringify(connection));
+        } catch {
+            // sessionStorage not available
+        }
+        // Include search context so the detail page can re-fetch if sessionStorage is empty
+        const params = new URLSearchParams({
+            origin: originId,
+            destination: destinationId,
+            departure: connection.departure.scheduledDeparture,
+        });
+        router.push(`/connections/${connection.id}?${params.toString()}`);
     };
 
     const handleBack = () => {
@@ -56,6 +73,11 @@ export function useConnectionsPage({
         handleHeaderToggleFavorite: routeFavorite.handleToggle,
         // "my train" highlight
         joinedConnectionIds,
+        // pagination
+        loadEarlier,
+        loadLater,
+        loadingEarlier,
+        loadingLater,
         // actions
         handleSelectConnection,
         handleBack,

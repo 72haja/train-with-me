@@ -80,6 +80,11 @@
     &.stopDotActive {
         background-color: var(--color-text-primary);
     }
+
+    &.stopDotTransfer {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-warning, #f59e0b) 20%, transparent);
+        background-color: var(--color-warning, #f59e0b);
+    }
 }
 
 .stopLine {
@@ -110,6 +115,30 @@
         color: var(--color-text-primary);
         font-weight: var(--font-weight-medium);
     }
+
+    &.stopNameTransfer {
+        color: var(--color-text-primary);
+        font-weight: var(--font-weight-medium);
+    }
+}
+
+.transferBadge {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    gap: 0.25rem;
+    margin-left: var(--spacing-sm);
+    border-radius: var(--radius-sm, 4px);
+    background-color: color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent);
+    padding: 0.125rem 0.375rem;
+    color: var(--color-warning, #f59e0b);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-xs, 0.75rem);
+}
+
+.transferIcon {
+    width: 0.75rem;
+    height: 0.75rem;
 }
 
 .stopTime {

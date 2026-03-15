@@ -14,10 +14,7 @@ export async function fetcher<T = unknown>(url: string): Promise<T> {
 /**
  * POST fetcher for SWR – use with useSWR(key, (url, { arg }) => postFetcher(url, arg)).
  */
-export async function postFetcher<T = unknown, B = unknown>(
-    url: string,
-    body: B
-): Promise<T> {
+export async function postFetcher<T = unknown, B = unknown>(url: string, body: B): Promise<T> {
     const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

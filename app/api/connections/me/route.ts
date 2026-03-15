@@ -1,4 +1,4 @@
-import { connection, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, connection } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**

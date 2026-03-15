@@ -36,9 +36,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ journeys });
     } catch (error) {
         console.error("Error in /api/static-vvs/connections/search:", error);
-        return NextResponse.json(
-            { error: "Failed to search connections" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to search connections" }, { status: 500 });
     }
 }

@@ -4,7 +4,6 @@
  * Use these when the live VVS/MobiData API is not available.
  * Data is authored manually (e.g. from PDF timetables) and does not update in real time.
  */
-
 import type { TransportType } from "@/packages/types/lib/types";
 
 /** Station reference in static data (id must match your Station.id, e.g. de:08111:6056) */

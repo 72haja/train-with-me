@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { MapPin, Train, Users } from "lucide-react";
 import { motion } from "motion/react";
-import { AlertingCard } from "@ui/molecules/alerting-card";
 import { FavoriteConnections } from "@ui/molecules/favorite-connections";
 import { RouteSearchForm, type RouteSearchFormRef } from "@ui/molecules/route-search-form";
 import { UserMenu } from "@ui/molecules/user-menu";
@@ -16,9 +15,14 @@ interface HomeScreenProps {
 export function HomeScreen({ searchLoading = false }: HomeScreenProps) {
     const searchFormRef = useRef<RouteSearchFormRef>(null);
 
-    const handleFavoriteSelect = (originId: string, destinationId: string) => {
+    const handleFavoriteSelect = (
+        originId: string,
+        destinationId: string,
+        originName?: string,
+        destinationName?: string
+    ) => {
         if (searchFormRef.current) {
-            searchFormRef.current.setRoute(originId, destinationId);
+            searchFormRef.current.setRoute(originId, destinationId, originName, destinationName);
         }
     };
 
@@ -56,17 +60,6 @@ export function HomeScreen({ searchLoading = false }: HomeScreenProps) {
                         See which of your friends are taking the same VVS train and coordinate your
                         journey in real-time.
                     </p>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.25 }}
-                        className={styles.alertingCardWrapper}>
-                        <AlertingCard variant="warning">
-                            Connections are based on a static timetable only. There is no information
-                            on delays or cancelled trains.
-                        </AlertingCard>
-                    </motion.div>
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

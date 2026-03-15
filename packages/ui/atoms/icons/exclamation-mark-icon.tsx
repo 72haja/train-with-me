@@ -7,9 +7,6 @@ export interface ExclamationMarkIconProps extends Omit<LucideProps, "ref"> {
     size?: number;
 }
 
-export function ExclamationMarkIcon({
-    size = defaultSize,
-    ...props
-}: ExclamationMarkIconProps) {
+export function ExclamationMarkIcon({ size = defaultSize, ...props }: ExclamationMarkIconProps) {
     return <AlertCircle size={size} aria-hidden {...props} />;
 }

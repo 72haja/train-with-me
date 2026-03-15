@@ -1,13 +1,9 @@
 /**
  * Server-side data fetching for use in Server Components.
- * Reuses the same logic as API routes so we don’t duplicate.
  */
-import { staticVvsMockData } from "@apis/static-vvs/data/mock-data";
-import { getStaticJourneyById, searchStaticConnections } from "@apis/static-vvs/search";
-import { mapJourneyToConnection } from "@apis/mobidata/mappers";
-import type { Journey } from "@/app/api/connections/search/route";
 import type { Connection } from "@/packages/types/lib/types";
 import { createServerSupabaseClient } from "@apis/supabase/server";
+import { searchEfaConnections } from "@apis/vvs-efa";
 
 export type DbFavoriteConnection = {
     id: string;
@@ -19,43 +15,22 @@ export type DbFavoriteConnection = {
     createdAt: string;
 };
 
-/** Search connections (static VVS). Returns connections and raw journeys. */
+/** Search connections via VVS EFA API. */
 export async function getConnectionsSearch(
     originId: string,
     destinationId: string,
     date?: string,
     time?: string
-): Promise<{ journeys: Journey[]; connections: Connection[] }> {
-    const searchDate =
+): Promise<{ connections: Connection[] }> {
+    const searchDateTime =
         date && time
             ? new Date(`${date}T${time}`).toISOString()
             : date
               ? new Date(date).toISOString()
               : undefined;
-    const journeys = searchStaticConnections(
-        staticVvsMockData,
-        originId,
-        destinationId,
-        searchDate,
-        20
-    );
-    const connections = journeys.map(j => mapJourneyToConnection(j));
-    return { journeys, connections };
-}
 
-/** Get one connection by id (static or future: by id). */
-export async function getConnectionById(
-    connectionId: string
-): Promise<{ connection: Connection; userConnectionId: string | null } | null> {
-    if (connectionId.startsWith("static-")) {
-        const datePart = new Date().toISOString().slice(0, 10);
-        const journey = getStaticJourneyById(staticVvsMockData, connectionId, datePart);
-        if (!journey) return null;
-        const connection = mapJourneyToConnection(journey);
-        return { connection, userConnectionId: null };
-    }
-    // Non-static: could call API or DB here
-    return null;
+    const connections = await searchEfaConnections(originId, destinationId, searchDateTime);
+    return { connections };
 }
 
 /** Get favorites for the current user (server-side, uses cookies). */

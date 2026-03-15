@@ -1,20 +1,18 @@
 /**
  * Shared function to fetch departures from a VVS station
  *
- * This function is cached per stationId and limit combination for 30 seconds.
- * Results are cached using Next.js Cache Components.
+ * Uses VVS EFA API.
+ * Results are cached using Next.js Cache Components for 30 seconds.
  */
 import { cacheLife } from "next/cache";
-import { getDeparturesFromStation } from "@apis/mobidata";
+import { getEfaDepartures } from "@apis/vvs-efa";
 
 export async function getDepartures(stationId: string, limit: number) {
     "use cache";
-    // Cache for 30 seconds (departures change frequently)
-    // Cache key includes both stationId and limit for proper cache isolation
     cacheLife({ revalidate: 30 });
 
     try {
-        const connections = await getDeparturesFromStation(stationId, limit);
+        const connections = await getEfaDepartures(stationId, limit);
 
         return {
             success: true,

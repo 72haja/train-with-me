@@ -2,7 +2,7 @@
 
 import { clsx } from "clsx";
 import { format, parseISO } from "date-fns";
-import { Clock, MapPin } from "lucide-react";
+import { ArrowLeftRight, Clock, MapPin } from "lucide-react";
 import { motion } from "motion/react";
 import type { Stop } from "@/packages/types/lib/types";
 import styles from "./train-info-card.module.scss";
@@ -15,7 +15,8 @@ interface TrainInfoCardProps {
 }
 
 export function TrainInfoCard({ departureTime, delay = 0, platform, stops }: TrainInfoCardProps) {
-    const departure = parseISO(departureTime);
+    const departure = departureTime ? parseISO(departureTime) : null;
+    const departureValid = departure && !isNaN(departure.getTime());
 
     return (
         <motion.div
@@ -29,7 +30,7 @@ export function TrainInfoCard({ departureTime, delay = 0, platform, stops }: Tra
                         <span>Departure</span>
                     </div>
                     <p className={styles.infoValue}>
-                        {format(departure, "HH:mm")}
+                        {departureValid ? format(departure, "HH:mm") : "–"}
                         {delay > 0 && <span className={styles.delay}> (+{delay} min)</span>}
                     </p>
                 </div>
@@ -48,7 +49,9 @@ export function TrainInfoCard({ departureTime, delay = 0, platform, stops }: Tra
                     {stops.map((stop, index) => {
                         const isFirst = index === 0;
                         const isLast = index === stops.length - 1;
-                        const stopTime = parseISO(stop.scheduledDeparture);
+                        const stopTime = stop.scheduledDeparture
+                            ? parseISO(stop.scheduledDeparture)
+                            : null;
 
                         return (
                             <div key={`${stop.station.id}-${index}`} className={styles.stop}>
@@ -56,7 +59,8 @@ export function TrainInfoCard({ departureTime, delay = 0, platform, stops }: Tra
                                     <div
                                         className={clsx(
                                             styles.stopDot,
-                                            (isFirst || isLast) && styles.stopDotActive
+                                            (isFirst || isLast) && styles.stopDotActive,
+                                            stop.isTransfer && styles.stopDotTransfer
                                         )}
                                     />
                                     {!isLast && <div className={styles.stopLine} />}
@@ -65,12 +69,21 @@ export function TrainInfoCard({ departureTime, delay = 0, platform, stops }: Tra
                                     <span
                                         className={clsx(
                                             styles.stopName,
-                                            (isFirst || isLast) && styles.stopNameActive
+                                            (isFirst || isLast) && styles.stopNameActive,
+                                            stop.isTransfer && styles.stopNameTransfer
                                         )}>
                                         {stop.station.name}
+                                        {stop.isTransfer && (
+                                            <span className={styles.transferBadge}>
+                                                <ArrowLeftRight className={styles.transferIcon} />
+                                                Umstieg
+                                            </span>
+                                        )}
                                     </span>
                                     <span className={styles.stopTime}>
-                                        {format(stopTime, "HH:mm")}
+                                        {stopTime && !isNaN(stopTime.getTime())
+                                            ? format(stopTime, "HH:mm")
+                                            : "–"}
                                     </span>
                                 </div>
                             </div>

@@ -177,26 +177,10 @@ export const staticVvsMockData: StaticVvsData = {
     ],
     trips: [
         // S1: every 30 min
-        ...buildTrips(
-            "s1",
-            0,
-            s1ToHerrenberg,
-            s1RunningMinutes,
-            "05:30",
-            "23:30",
-            "herrenberg"
-        ),
+        ...buildTrips("s1", 0, s1ToHerrenberg, s1RunningMinutes, "05:30", "23:30", "herrenberg"),
         ...buildTrips("s1", 1, s1ToHbf, s1RunningMinutes, "06:00", "23:30", "hbf"),
         // S2: every 30 min
-        ...buildTrips(
-            "s2",
-            0,
-            s2ToFlughafen,
-            s2RunningMinutes,
-            "06:00",
-            "23:30",
-            "flughafen"
-        ),
+        ...buildTrips("s2", 0, s2ToFlughafen, s2RunningMinutes, "06:00", "23:30", "flughafen"),
         ...buildTrips("s2", 1, s2ToHbf, s2RunningMinutes, "06:30", "23:30", "hbf"),
         // S3: every 30 min
         ...buildTrips("s3", 0, s3ToBacknang, s3RunningMinutes, "05:30", "23:30", "backnang"),
