@@ -1,15 +1,23 @@
-import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
- * Cached function to fetch user's friends
- * Results are cached per user ID for 2 minutes
- * Uses unstable_cache for request-time caching (doesn't interfere with prerendering)
+ * GET /api/friends
+ * Get current user's friends
  */
-const getCachedFriends = unstable_cache(
-    async (userId: string, supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) => {
-        // Get accepted friendships where user is either requester or recipient
+export async function GET(_request: NextRequest) {
+    try {
+        const supabase = await createServerSupabaseClient();
+
+        const {
+            data: { user },
+            error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { data, error } = await supabase
             .from("friendships")
             .select(
@@ -29,19 +37,17 @@ const getCachedFriends = unstable_cache(
                     full_name,
                     avatar_url
                 )
-            `
+                `
             )
-            .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+            .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
             .eq("status", "accepted");
 
         if (error) {
             console.error("Error fetching friends:", error);
-            return [];
+            return NextResponse.json({ success: true, data: [] });
         }
 
-        // Transform to friend list (get the other user in each friendship)
-        return (data || []).map(friendship => {
-            // Supabase returns arrays for joined relations, get first item
+        const friends = (data || []).map(friendship => {
             const requester = Array.isArray(friendship.requester)
                 ? friendship.requester[0]
                 : friendship.requester;
@@ -49,7 +55,7 @@ const getCachedFriends = unstable_cache(
                 ? friendship.recipient[0]
                 : friendship.recipient;
 
-            const friend = friendship.user_id === userId ? recipient : requester;
+            const friend = friendship.user_id === user.id ? recipient : requester;
 
             return {
                 id: friend?.id || "",
@@ -58,34 +64,6 @@ const getCachedFriends = unstable_cache(
                 friendshipId: friendship.id,
             };
         });
-    },
-    ["friends"],
-    {
-        revalidate: 120, // Cache for 2 minutes
-        tags: ["friends"],
-    }
-);
-
-/**
- * GET /api/friends
- * Get current user's friends
- */
-export async function GET(_request: NextRequest) {
-    const supabase = await createServerSupabaseClient();
-    try {
-        // Get current user from session
-        const {
-            data: { user },
-            error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        // Note: We pass the supabase client, but unstable_cache will cache the result
-        // per unique userId, so the cookie access happens at request time, not during prerendering
-        const friends = await getCachedFriends(user.id, supabase);
 
         return NextResponse.json({
             success: true,

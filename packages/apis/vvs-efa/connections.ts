@@ -95,13 +95,17 @@ function mapEfaTripToConnection(trip: EfaTrip, index: number): Connection {
         departurePoint.stamp.rtDate !== departurePoint.stamp.date ||
         departurePoint.stamp.rtTime !== departurePoint.stamp.time;
 
+    const stableTripId = mainLeg.mode.diva?.stateless;
+    // Build a deterministic ID from line + origin + departure so both users get the same ID
+    const connectionId = `efa-${lineNumber}-${departurePoint.ref.id}-${departureStop.scheduledDeparture}`;
+
     return {
-        id: `efa-${index}-${departureStop.scheduledDeparture}`,
+        id: connectionId,
         line,
         departure: departureStop,
         arrival: arrivalStop,
         stops,
-        tripId: mainLeg.mode.diva?.stateless ?? `trip-${index}`,
+        tripId: stableTripId ?? `trip-${index}`,
         friends: [],
         status: "on-time",
         hasRealTimeData: hasRealtime,

@@ -4,7 +4,8 @@ import { Suspense, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import useSWR from "swr";
-import { postFetcher } from "@/app/lib/fetcher";
+import { useMyConnections } from "@/app/hooks/useMyConnections";
+import { fetcher, postFetcher } from "@/app/lib/fetcher";
 import type { Connection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
@@ -90,7 +91,8 @@ function ConnectionPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user, loading: authLoading } = useSession();
-    const [userConnectionId, setUserConnectionId] = useState<string | null>(null);
+    const { connectionIds, mutate: mutateMyConnections } = useMyConnections();
+    const [optimisticJoined, setOptimisticJoined] = useState<boolean | null>(null);
 
     const connectionId = decodeURIComponent(params.id as string);
     const originId = searchParams.get("origin");
@@ -104,10 +106,36 @@ function ConnectionPageContent() {
         isLoading,
         mutate,
     } = useSWR(
-        canFetch ? ["connection-detail", connectionId] : null,
+        canFetch ? ["connection-detail", connectionId, user?.id] : null,
         () => fetchConnection(connectionId, originId!, destinationId!, departure!),
         { revalidateOnFocus: false }
     );
+
+    // Fetch friends on this connection from Supabase
+    const { data: friendsData, mutate: mutateFriends } = useSWR(
+        user && connectionId ? [`/api/connections/${connectionId}/friends`, user.id] : null,
+        () =>
+            fetcher<{ friends: { id: string; name: string; avatarUrl: string | null }[] }>(
+                `/api/connections/${connectionId}/friends`
+            )
+    );
+
+    // Merge Supabase friends into the connection object
+    const connectionWithFriends = connection
+        ? {
+              ...connection,
+              friends: (friendsData?.friends ?? []).map(f => ({
+                  id: f.id,
+                  name: f.name,
+                  avatarUrl: f.avatarUrl ?? undefined,
+                  isOnline: false,
+              })),
+          }
+        : null;
+
+    // Server-backed presence check, with optimistic override for join/leave
+    const isUserOnConnection =
+        optimisticJoined !== null ? optimisticJoined : connectionIds.includes(connectionId);
 
     const handleBack = () => {
         router.back();
@@ -123,36 +151,56 @@ function ConnectionPageContent() {
         if (!connection || !user) return;
 
         try {
+            setOptimisticJoined(true);
             const response = await fetch(`/api/connections/${connectionIdParam}/join`, {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    originStationId: originId,
+                    originStationName: connection.departure.station.name,
+                    destinationStationId: destinationId,
+                    destinationStationName: connection.arrival.station.name,
+                    departureTime: connection.departure.scheduledDeparture,
+                    arrivalTime: connection.arrival.scheduledDeparture,
+                    lineNumber: connection.line.number,
+                    lineType: connection.line.type,
+                    lineColor: connection.line.color,
+                    lineDirection: connection.line.direction,
+                }),
             });
 
             if (response.ok) {
-                const data = await response.json();
-                setUserConnectionId(data.connectionId ?? connectionIdParam);
+                mutateMyConnections();
+                mutateFriends();
             } else {
+                setOptimisticJoined(null);
                 console.error("Failed to join connection");
             }
         } catch (error) {
+            setOptimisticJoined(null);
             console.error("Error joining connection:", error);
         }
     };
 
     const handleLeaveConnection = async () => {
-        if (!connection || !userConnectionId) return;
+        if (!connection) return;
 
         try {
+            setOptimisticJoined(false);
             const response = await fetch(`/api/connections/${connectionId}/leave`, {
                 method: "POST",
             });
 
             if (response.ok) {
-                setUserConnectionId(null);
+                mutateMyConnections();
+                mutateFriends();
                 mutate();
             } else {
+                setOptimisticJoined(null);
                 console.error("Failed to leave connection");
             }
         } catch (error) {
+            setOptimisticJoined(null);
             console.error("Error leaving connection:", error);
         }
     };
@@ -161,7 +209,7 @@ function ConnectionPageContent() {
         return <ConnectionDetailLoadingShell onBack={handleBack} />;
     }
 
-    if (!connection) {
+    if (!connectionWithFriends) {
         return (
             <div className={styles.container}>
                 <p>Connection not found</p>
@@ -172,11 +220,11 @@ function ConnectionPageContent() {
     return (
         <div className={styles.container}>
             <TrainDetailsScreen
-                connection={connection}
+                connection={connectionWithFriends}
                 onBack={handleBack}
                 onConfirmPresence={handleJoinConnection}
                 onRemovePresence={handleLeaveConnection}
-                isUserOnConnection={userConnectionId === connection.id}
+                isUserOnConnection={isUserOnConnection}
             />
         </div>
     );

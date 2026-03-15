@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import type { Connection } from "@/packages/types/lib/types";
@@ -82,7 +83,7 @@ export function TrainDetailsScreen({
                                 </span>
                             </h1>
                             <p className={styles.headerSubtitle}>
-                                {format(departureTime, "HH:mm")}
+                                {format(departureTime, "EEEE, d. MMMM · HH:mm", { locale: de })}
                             </p>
                         </div>
                     </div>

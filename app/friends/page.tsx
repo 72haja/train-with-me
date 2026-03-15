@@ -6,6 +6,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import useSWR from "swr";
 import type { FriendRequest, FriendWithFriendshipId } from "@/packages/types/lib/types";
+import { useSession } from "@apis/hooks/useSession";
 import { AddFriendForm } from "@ui/molecules/add-friend-form";
 import { Alert } from "@ui/molecules/alert";
 import { FriendCard } from "@ui/molecules/friend-card";
@@ -28,6 +29,7 @@ async function fetchRequests(): Promise<{ received: FriendRequest[]; sent: Frien
 
 export default function FriendsPage() {
     const router = useRouter();
+    const { user } = useSession();
     const [requestLoading, setRequestLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -37,10 +39,10 @@ export default function FriendsPage() {
         data: friends = [],
         isLoading: friendsLoading,
         mutate: mutateFriends,
-    } = useSWR("/api/friends", fetchFriends);
+    } = useSWR(user ? ["/api/friends", user.id] : null, fetchFriends);
 
     const { data: requests = { received: [], sent: [] }, mutate: mutateRequests } = useSWR(
-        "/api/friends/requests",
+        user ? ["/api/friends/requests", user.id] : null,
         fetchRequests
     );
 

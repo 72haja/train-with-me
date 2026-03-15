@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * Get Supabase client for Server Components and Server Actions
@@ -32,6 +33,21 @@ export async function getServerSupabaseClient() {
                 },
             },
         }
+    );
+}
+
+/**
+ * Get Supabase admin client (service role) that bypasses RLS.
+ * Use only in server-side API routes for cross-user queries.
+ */
+export function createServiceRoleClient() {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+    }
+
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 }
 

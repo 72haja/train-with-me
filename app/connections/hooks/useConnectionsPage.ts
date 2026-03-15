@@ -1,11 +1,17 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { Connection, DbFavoriteConnection } from "@/packages/types/lib/types";
+import useSWR from "swr";
+import { postFetcher } from "@/app/lib/fetcher";
+import type { Connection, DbFavoriteConnection, Friend } from "@/packages/types/lib/types";
+import { useSession } from "@apis/hooks/useSession";
 import { useConnectionsSearch } from "./useConnectionsSearch";
 import type { ConnectionsSearchParams } from "./useConnectionsSearch";
 import { useFavorites, useRouteFavoriteToggle } from "./useFavorites";
 import { useJoinedConnectionIds } from "./useJoinedConnectionIds";
+
+type FriendsMap = Record<string, { id: string; name: string; avatarUrl: string | null }[]>;
 
 export type UseConnectionsPageParams = {
     searchParams: ConnectionsSearchParams;
@@ -19,10 +25,11 @@ export function useConnectionsPage({
     initialFavorites,
 }: UseConnectionsPageParams) {
     const router = useRouter();
+    const { user } = useSession();
     const { originId, destinationId, date, time } = searchParams;
 
     const {
-        connections,
+        connections: rawConnections,
         isLoading,
         errorMessage,
         loadEarlier,
@@ -38,6 +45,32 @@ export function useConnectionsPage({
     });
 
     const joinedConnectionIds = useJoinedConnectionIds();
+
+    // Fetch friends for all visible connections
+    const connectionIds = useMemo(() => rawConnections.map(c => c.id), [rawConnections]);
+    const { data: friendsData } = useSWR(
+        user && connectionIds.length > 0
+            ? ["connections-friends", user.id, ...connectionIds]
+            : null,
+        () =>
+            postFetcher<{ friends: FriendsMap }>("/api/connections/friends", {
+                connectionIds,
+            })
+    );
+
+    // Merge friends into connections
+    const connections = useMemo(() => {
+        const friendsMap = friendsData?.friends ?? {};
+        return rawConnections.map(c => ({
+            ...c,
+            friends: (friendsMap[c.id] ?? []).map(f => ({
+                id: f.id,
+                name: f.name,
+                avatarUrl: f.avatarUrl ?? undefined,
+                isOnline: false,
+            })) as Friend[],
+        }));
+    }, [rawConnections, friendsData]);
 
     const handleSelectConnection = (connection: Connection) => {
         // Store the full connection data for the detail page

@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { MapPin, Train, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { FavoriteConnections } from "@ui/molecules/favorite-connections";
+import { MyConnections } from "@ui/molecules/my-connections/my-connections";
 import { RouteSearchForm, type RouteSearchFormRef } from "@ui/molecules/route-search-form";
 import { UserMenu } from "@ui/molecules/user-menu";
 import styles from "./home-screen.module.scss";
@@ -67,6 +68,7 @@ export function HomeScreen({ searchLoading = false }: HomeScreenProps) {
                         transition={{ delay: 0.3 }}
                         className={styles.searchForm}>
                         <RouteSearchForm ref={searchFormRef} loading={searchLoading} />
+                        <MyConnections />
                         <FavoriteConnections onSelectFavorite={handleFavoriteSelect} />
                     </motion.div>
                 </motion.div>
