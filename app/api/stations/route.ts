@@ -3,12 +3,11 @@
  * Optional query: ?q=... to search by name.
  * Returns default VVS stations when no query is provided.
  */
-import { NextRequest, NextResponse, connection } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { mockStations } from "@apis/mockStations";
 import { searchEfaStations } from "@apis/vvs-efa";
 
 export async function GET(request: NextRequest) {
-    await connection();
     try {
         const q = request.nextUrl.searchParams.get("q");
         const trainOnly = request.nextUrl.searchParams.get("trainOnly") === "true";

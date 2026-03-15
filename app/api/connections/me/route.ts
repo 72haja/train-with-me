@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, connection } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supabase/server";
 
 export type UserConnectionRow = {
@@ -21,7 +21,6 @@ export type UserConnectionRow = {
  * including display metadata and friends on the same connection.
  */
 export async function GET(_request: NextRequest) {
-    await connection();
     try {
         const supabase = await createServerSupabaseClient();
 
