@@ -4,8 +4,8 @@ import { Suspense, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import useSWR from "swr";
-import type { Connection } from "@/packages/types/lib/types";
 import { postFetcher } from "@/app/lib/fetcher";
+import type { Connection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
 import styles from "./page.module.scss";
@@ -14,7 +14,7 @@ async function fetchConnection(
     connectionId: string,
     originId: string,
     destinationId: string,
-    departure: string,
+    departure: string
 ): Promise<Connection | null> {
     // 1. Try sessionStorage first (instant, from card click)
     try {
@@ -25,15 +25,12 @@ async function fetchConnection(
     }
 
     // 2. Re-fetch from EFA using search context
-    const data = await postFetcher<{ connections: Connection[] }>(
-        "/api/connections/search",
-        {
-            originId,
-            destinationId,
-            date: departure.split("T")[0],
-            time: departure.split("T")[1]?.slice(0, 5),
-        },
-    );
+    const data = await postFetcher<{ connections: Connection[] }>("/api/connections/search", {
+        originId,
+        destinationId,
+        date: departure.split("T")[0],
+        time: departure.split("T")[1]?.slice(0, 5),
+    });
 
     const match = (data.connections ?? []).find(c => c.id === connectionId) ?? null;
 
@@ -102,10 +99,14 @@ function ConnectionPageContent() {
 
     const canFetch = !!connectionId && !!originId && !!destinationId && !!departure && !!user;
 
-    const { data: connection, isLoading, mutate } = useSWR(
+    const {
+        data: connection,
+        isLoading,
+        mutate,
+    } = useSWR(
         canFetch ? ["connection-detail", connectionId] : null,
         () => fetchConnection(connectionId, originId!, destinationId!, departure!),
-        { revalidateOnFocus: false },
+        { revalidateOnFocus: false }
     );
 
     const handleBack = () => {

@@ -39,10 +39,10 @@ export default function FriendsPage() {
         mutate: mutateFriends,
     } = useSWR("/api/friends", fetchFriends);
 
-    const {
-        data: requests = { received: [], sent: [] },
-        mutate: mutateRequests,
-    } = useSWR("/api/friends/requests", fetchRequests);
+    const { data: requests = { received: [], sent: [] }, mutate: mutateRequests } = useSWR(
+        "/api/friends/requests",
+        fetchRequests
+    );
 
     // Auto-dismiss alerts after 10 seconds
     useEffect(() => {
