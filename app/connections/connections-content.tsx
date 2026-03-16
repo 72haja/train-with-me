@@ -37,7 +37,7 @@ export function ConnectionsContent({
         loadLater,
         loadingEarlier,
         loadingLater,
-        handleSelectConnection,
+        getConnectionHref,
         handleBack,
     } = useConnectionsPage({
         searchParams,
@@ -117,7 +117,7 @@ export function ConnectionsContent({
                             <ConnectionCard
                                 key={connection.id}
                                 connection={connection}
-                                onClick={() => handleSelectConnection(connection)}
+                                href={getConnectionHref(connection)}
                                 isActive={joinedConnectionIds?.includes(connection.id) ?? false}
                             />
                         ))}

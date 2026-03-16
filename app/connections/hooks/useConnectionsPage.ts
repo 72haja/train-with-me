@@ -72,20 +72,13 @@ export function useConnectionsPage({
         }));
     }, [rawConnections, friendsData]);
 
-    const handleSelectConnection = (connection: Connection) => {
-        // Store the full connection data for the detail page
-        try {
-            sessionStorage.setItem(`connection-${connection.id}`, JSON.stringify(connection));
-        } catch {
-            // sessionStorage not available
-        }
-        // Include search context so the detail page can re-fetch if sessionStorage is empty
+    const getConnectionHref = (connection: Connection) => {
         const params = new URLSearchParams({
             origin: originId,
             destination: destinationId,
             departure: connection.departure.scheduledDeparture,
         });
-        router.push(`/connections/${encodeURIComponent(connection.id)}?${params.toString()}`);
+        return `/connections/${encodeURIComponent(connection.id)}?${params.toString()}`;
     };
 
     const handleBack = () => {
@@ -112,7 +105,7 @@ export function useConnectionsPage({
         loadingEarlier,
         loadingLater,
         // actions
-        handleSelectConnection,
+        getConnectionHref,
         handleBack,
         // for card-level favorite check (if needed)
         isFavorite,

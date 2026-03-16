@@ -5,6 +5,13 @@
     width: 100%;
 }
 
+.cardLink {
+    display: block;
+    width: 100%;
+    color: inherit;
+    text-decoration: none;
+}
+
 .card {
     position: relative;
     flex: 1;

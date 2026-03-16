@@ -30,7 +30,15 @@ export async function searchEfaConnections(
     });
 
     const trips = response.trips ?? [];
-    return trips.map((trip, idx) => mapEfaTripToConnection(trip, idx));
+    const mapped = trips.map((trip, idx) => mapEfaTripToConnection(trip, idx));
+
+    // Deduplicate by ID (EFA can return the same trip twice, e.g. planned + realtime variants)
+    const seen = new Set<string>();
+    return mapped.filter(c => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+    });
 }
 
 function mapEfaTripToConnection(trip: EfaTrip, index: number): Connection {
