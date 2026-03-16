@@ -85,7 +85,7 @@ export function useConnectionsPage({
             destination: destinationId,
             departure: connection.departure.scheduledDeparture,
         });
-        router.push(`/connections/${connection.id}?${params.toString()}`);
+        router.push(`/connections/${encodeURIComponent(connection.id)}?${params.toString()}`);
     };
 
     const handleBack = () => {
