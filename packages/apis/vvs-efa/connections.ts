@@ -104,8 +104,10 @@ function mapEfaTripToConnection(trip: EfaTrip, index: number): Connection {
         departurePoint.stamp.rtTime !== departurePoint.stamp.time;
 
     const stableTripId = mainLeg.mode.diva?.stateless;
-    // Build a deterministic ID from line + origin + departure so both users get the same ID
-    const connectionId = `efa-${lineNumber}-${departurePoint.ref.id}-${departureStop.scheduledDeparture}`;
+    // Build a deterministic ID from line + origin + departure so both users get the same ID.
+    // Strip colons from the timestamp to keep the ID URL-safe (no encoding needed in path segments).
+    const safeTs = departureStop.scheduledDeparture.replace(/:/g, "");
+    const connectionId = `efa-${lineNumber}-${departurePoint.ref.id}-${safeTs}`;
 
     return {
         id: connectionId,

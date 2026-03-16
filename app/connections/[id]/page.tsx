@@ -94,7 +94,7 @@ function ConnectionPageContent() {
     const { connectionIds, mutate: mutateMyConnections } = useMyConnections();
     const [optimisticJoined, setOptimisticJoined] = useState<boolean | null>(null);
 
-    const connectionId = decodeURIComponent(params.id as string);
+    const connectionId = params.id as string;
     const originId = searchParams.get("origin");
     const destinationId = searchParams.get("destination");
     const departure = searchParams.get("departure");
