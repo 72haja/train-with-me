@@ -13,7 +13,7 @@ import styles from "./connection-card.module.scss";
 
 interface ConnectionCardProps {
     connection: Connection;
-    href: string;
+    href?: string;
     onClick?: () => void;
     isActive?: boolean;
     className?: string;
@@ -52,71 +52,77 @@ export function ConnectionCard({
         }
     };
 
+    const cardContent = (
+        <div className={styles.content}>
+            <div className={styles.lineBadge} style={{ backgroundColor: connection.line.color }}>
+                <span className={styles.lineNumber}>{connection.line.number}</span>
+            </div>
+
+            <div className={styles.info}>
+                <div className={styles.topRow}>
+                    <div className={styles.route}>
+                        <MapPin className={styles.icon} />
+                        <span className={styles.routeText}>
+                            <span className={styles.station}>
+                                {connection.departure.station.name}
+                            </span>
+                            <span className={styles.arrow}>→</span>
+                            <span className={styles.station}>
+                                {connection.arrival.station.name}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
+                <div className={styles.timeRow}>
+                    <Clock className={styles.iconSmall} />
+                    <span className={styles.timeText}>
+                        {format(actualDepartureTime || departureTime, "HH:mm")}
+                    </span>
+                    {delay > 0 && <span className={styles.delay}>+{delay} min</span>}
+                    {delay < 0 && <span className={styles.early}>{delay} min</span>}
+                    <span className={styles.separator}>·</span>
+                    <span className={styles.platform}>
+                        Platform {connection.departure.platform || "–"}
+                    </span>
+                </div>
+
+                {connection.friends.length > 0 ? (
+                    <div className={styles.friends}>
+                        <FriendAvatarGroup friends={connection.friends} max={3} />
+                        <span className={styles.friendsText}>
+                            {connection.friends.length === 1
+                                ? `${connection.friends[0]!.name} is riding`
+                                : `${connection.friends.length} friends riding`}
+                        </span>
+                    </div>
+                ) : (
+                    <div className={styles.noFriends}>
+                        <Users className={styles.iconSmall} />
+                        <span className={styles.noFriendsText}>No friends on this train</span>
+                    </div>
+                )}
+            </div>
+
+            {isActive && <div className={styles.activeIndicator} />}
+        </div>
+    );
+
     return (
         <div className={styles.cardWrapper}>
             <motion.div
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 className={clsx(styles.card, isActive && styles.active, className)}>
-                <Link href={href} onClick={onClick} className={styles.cardLink}>
-                    <div className={styles.content}>
-                        <div
-                            className={styles.lineBadge}
-                            style={{ backgroundColor: connection.line.color }}>
-                            <span className={styles.lineNumber}>{connection.line.number}</span>
-                        </div>
-
-                        <div className={styles.info}>
-                            <div className={styles.topRow}>
-                                <div className={styles.route}>
-                                    <MapPin className={styles.icon} />
-                                    <span className={styles.routeText}>
-                                        <span className={styles.station}>
-                                            {connection.departure.station.name}
-                                        </span>
-                                        <span className={styles.arrow}>→</span>
-                                        <span className={styles.station}>
-                                            {connection.arrival.station.name}
-                                        </span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className={styles.timeRow}>
-                                <Clock className={styles.iconSmall} />
-                                <span className={styles.timeText}>
-                                    {format(actualDepartureTime || departureTime, "HH:mm")}
-                                </span>
-                                {delay > 0 && <span className={styles.delay}>+{delay} min</span>}
-                                {delay < 0 && <span className={styles.early}>{delay} min</span>}
-                                <span className={styles.separator}>·</span>
-                                <span className={styles.platform}>
-                                    Platform {connection.departure.platform || "–"}
-                                </span>
-                            </div>
-
-                            {connection.friends.length > 0 ? (
-                                <div className={styles.friends}>
-                                    <FriendAvatarGroup friends={connection.friends} max={3} />
-                                    <span className={styles.friendsText}>
-                                        {connection.friends.length === 1
-                                            ? `${connection.friends[0]!.name} is riding`
-                                            : `${connection.friends.length} friends riding`}
-                                    </span>
-                                </div>
-                            ) : (
-                                <div className={styles.noFriends}>
-                                    <Users className={styles.iconSmall} />
-                                    <span className={styles.noFriendsText}>
-                                        No friends on this train
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-
-                        {isActive && <div className={styles.activeIndicator} />}
-                    </div>
-                </Link>
+                {href ? (
+                    <Link href={href} onClick={onClick} className={styles.cardLink}>
+                        {cardContent}
+                    </Link>
+                ) : (
+                    <button type="button" onClick={onClick} className={styles.cardLink}>
+                        {cardContent}
+                    </button>
+                )}
             </motion.div>
 
             {onToggleFavorite && (
