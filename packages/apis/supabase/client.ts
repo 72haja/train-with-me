@@ -8,8 +8,9 @@
  * even when cookies are cleared.
  */
 import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "./database.types";
 
-let supabaseClientInstance: ReturnType<typeof createBrowserClient> | null = null;
+let supabaseClientInstance: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 // Create Supabase client for browser/client-side usage
 // This client automatically reads from cookies (set by server actions)
@@ -23,7 +24,7 @@ export const getSupabaseClient = () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-    const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
+    const client = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
 
     // Sync session to localStorage for persistence when cookies are cleared
     if (typeof window !== "undefined") {

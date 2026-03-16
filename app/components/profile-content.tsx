@@ -160,10 +160,14 @@ export function ProfileContent() {
                 console.error("Error updating user metadata:", updateError);
             }
 
+            if (!user) {
+                throw new Error("User not found");
+            }
+
             // Update profile table
             await supabase.from("profiles").upsert(
                 {
-                    id: user?.id,
+                    id: user.id,
                     avatar_url: publicUrl,
                     updated_at: new Date().toISOString(),
                 },

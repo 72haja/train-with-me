@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 /**
  * Get Supabase client for Server Components and Server Actions
@@ -12,7 +13,7 @@ export async function getServerSupabaseClient() {
 
     const cookieStore = await cookies();
 
-    return createServerClient(
+    return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         {
@@ -45,7 +46,7 @@ export function createServiceRoleClient() {
         throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
     }
 
-    return createClient(
+    return createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY
     );
@@ -65,7 +66,7 @@ export async function createServerSupabaseClient() {
 
     const cookieStore = await cookies();
 
-    return createServerClient(
+    return createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {

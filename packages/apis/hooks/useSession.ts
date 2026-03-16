@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseClient } from "@apis/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 
 interface UseSessionResult {
     user: User | null;
@@ -21,15 +21,17 @@ export function useSession(): UseSessionResult {
 
     useEffect(() => {
         // Get initial session
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+        supabaseClient.auth
+            .getSession()
+            .then(({ data: { session } }: { data: { session: Session | null } }) => {
+                setUser(session?.user ?? null);
+                setLoading(false);
+            });
 
         // Listen for auth changes
         const {
             data: { subscription },
-        } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+        } = supabaseClient.auth.onAuthStateChange((_event: string, session: Session | null) => {
             setUser(session?.user ?? null);
             setLoading(false);
         });

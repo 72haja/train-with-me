@@ -52,8 +52,8 @@ export async function getFriends(userId: string): Promise<Friend[]> {
                 .map(friendship => {
                     const friend =
                         friendship.user_id === userId
-                            ? (friendship.friend?.[0] ?? null)
-                            : (friendship.requester?.[0] ?? null);
+                            ? (friendship.friend ?? null)
+                            : (friendship.requester ?? null);
 
                     return {
                         id: friend?.id || "",
