@@ -42,9 +42,8 @@ export function SignInForm() {
             }
 
             // Success - session is stored in cookies by server action
-            // Redirect to home page
-            router.push("/");
-            router.refresh();
+            // Use full page navigation so the server reads the cookie correctly
+            window.location.href = "/";
         } catch (err) {
             // Handle unexpected errors
             setError(err instanceof Error ? err.message : "Sign in failed");

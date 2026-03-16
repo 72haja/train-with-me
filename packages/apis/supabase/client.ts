@@ -9,10 +9,16 @@
  */
 import { createBrowserClient } from "@supabase/ssr";
 
+let supabaseClientInstance: ReturnType<typeof createBrowserClient> | null = null;
+
 // Create Supabase client for browser/client-side usage
 // This client automatically reads from cookies (set by server actions)
 // and syncs with localStorage for offline support
 export const getSupabaseClient = () => {
+    if (supabaseClientInstance) {
+        return supabaseClientInstance;
+    }
+
     // Environment variables (set in .env.local)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -69,5 +75,6 @@ export const getSupabaseClient = () => {
         });
     }
 
+    supabaseClientInstance = client;
     return client;
 };
