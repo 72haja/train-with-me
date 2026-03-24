@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, connection } from "next/server";
 import { createServerSupabaseClient } from "@apis/supabase/server";
 
 /**
@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@apis/supabase/server";
  * Get pending friend requests (both sent and received)
  */
 export async function GET(_request: NextRequest) {
+    await connection();
     const supabase = await createServerSupabaseClient();
     try {
         const {

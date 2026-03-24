@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, connection } from "next/server";
 import type { FriendOnConnection } from "@/packages/types/lib/types";
 import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supabase/server";
 
@@ -8,6 +8,7 @@ import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supab
  * Falls back to connection_id matching if no tripId query param is provided.
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    await connection();
     try {
         const { id: connectionId } = await params;
         const tripId = request.nextUrl.searchParams.get("tripId");

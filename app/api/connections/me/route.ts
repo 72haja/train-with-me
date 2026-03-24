@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, connection } from "next/server";
 import type { FriendOnConnection } from "@/packages/types/lib/types";
 import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supabase/server";
 
@@ -23,6 +23,7 @@ export type UserConnectionRow = {
  * including display metadata and friends on the same physical train (trip_id match).
  */
 export async function GET(_request: NextRequest) {
+    await connection();
     try {
         const supabase = await createServerSupabaseClient();
 
