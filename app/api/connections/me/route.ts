@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { FriendOnConnection } from "@/packages/types/lib/types";
 import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supabase/server";
 
 export type UserConnectionRow = {
@@ -13,12 +14,13 @@ export type UserConnectionRow = {
     line_type: string | null;
     line_color: string | null;
     line_direction: string | null;
+    trip_id: string | null;
 };
 
 /**
  * GET /api/connections/me
  * Returns the list of connections the current user has joined (and not left),
- * including display metadata and friends on the same connection.
+ * including display metadata and friends on the same physical train (trip_id match).
  */
 export async function GET(_request: NextRequest) {
     try {
@@ -37,7 +39,7 @@ export async function GET(_request: NextRequest) {
         const { data, error } = await supabase
             .from("user_connections")
             .select(
-                "connection_id, origin_station_id, origin_station_name, destination_station_id, destination_station_name, departure_time, arrival_time, line_number, line_type, line_color, line_direction"
+                "connection_id, origin_station_id, origin_station_name, destination_station_id, destination_station_name, departure_time, arrival_time, line_number, line_type, line_color, line_direction, trip_id"
             )
             .eq("user_id", user.id)
             .is("left_at", null);
@@ -49,6 +51,9 @@ export async function GET(_request: NextRequest) {
 
         const rows = (data ?? []) as UserConnectionRow[];
         const connectionIds = rows.map(row => row.connection_id);
+
+        // Collect all trip_ids for trip-based matching
+        const tripIds = rows.map(row => row.trip_id).filter((id): id is string => id !== null);
 
         // 2. Get user's friends
         const { data: friendships, error: friendsError } = await supabase
@@ -86,27 +91,37 @@ export async function GET(_request: NextRequest) {
             }
         }
 
-        // 3. Get which friends are on which of our connections
-        const friendsOnConnections: Record<string, (typeof friendProfiles)[string][]> = {};
+        // 3. Get which friends are on which of our trips (trip_id based matching)
+        const friendsOnTrips: Record<string, FriendOnConnection[]> = {};
 
-        if (connectionIds.length > 0 && friendIds.length > 0) {
+        if (tripIds.length > 0 && friendIds.length > 0) {
             // Service role bypasses RLS to read other users' connections
             const adminClient = createServiceRoleClient();
             const { data: friendConnectionData } = await adminClient
                 .from("user_connections")
-                .select("user_id, connection_id")
-                .in("connection_id", connectionIds)
+                .select(
+                    "user_id, connection_id, trip_id, origin_station_name, destination_station_name, departure_time, arrival_time"
+                )
+                .in("trip_id", tripIds)
                 .in("user_id", friendIds)
                 .is("left_at", null);
 
             if (friendConnectionData) {
                 for (const fc of friendConnectionData) {
                     const profile = friendProfiles[fc.user_id];
-                    if (profile) {
-                        if (!friendsOnConnections[fc.connection_id]) {
-                            friendsOnConnections[fc.connection_id] = [];
+                    if (profile && fc.trip_id) {
+                        if (!friendsOnTrips[fc.trip_id]) {
+                            friendsOnTrips[fc.trip_id] = [];
                         }
-                        friendsOnConnections[fc.connection_id]!.push(profile);
+                        friendsOnTrips[fc.trip_id]!.push({
+                            id: profile.id,
+                            name: profile.name,
+                            avatarUrl: profile.avatarUrl,
+                            originStationName: fc.origin_station_name,
+                            destinationStationName: fc.destination_station_name,
+                            departureTime: fc.departure_time,
+                            arrivalTime: fc.arrival_time,
+                        });
                     }
                 }
             }
@@ -125,7 +140,8 @@ export async function GET(_request: NextRequest) {
             lineType: row.line_type,
             lineColor: row.line_color,
             lineDirection: row.line_direction,
-            friends: friendsOnConnections[row.connection_id] ?? [],
+            tripId: row.trip_id,
+            friends: row.trip_id ? (friendsOnTrips[row.trip_id] ?? []) : [],
         }));
 
         return NextResponse.json({ connectionIds, connections });

@@ -72,3 +72,19 @@
     color: var(--color-text-tertiary);
     font-size: var(--font-size-sm);
 }
+
+.route {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.125rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.routeIcon {
+    flex-shrink: 0;
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--color-text-tertiary);
+}

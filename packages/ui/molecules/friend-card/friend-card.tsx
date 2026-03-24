@@ -1,17 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import type { Friend } from "@/packages/types/lib/types";
+import { clsx } from "clsx";
+import { MapPin } from "lucide-react";
+import type { Friend, FriendOnConnection } from "@/packages/types/lib/types";
 import styles from "./friend-card.module.scss";
 
 interface FriendCardProps {
-    friend: Friend;
+    friend: Friend | FriendOnConnection;
     className?: string;
 }
 
-export function FriendCard({ friend, className }: FriendCardProps) {
+const isFriendOnConnection = (
+    friend: Friend | FriendOnConnection
+): friend is FriendOnConnection => {
+    return "originStationName" in friend;
+};
+
+export const FriendCard = ({ friend, className }: FriendCardProps) => {
+    const hasRouteInfo = isFriendOnConnection(friend) && friend.originStationName;
+
     return (
-        <div className={`${styles.card} ${className || ""}`}>
+        <div className={clsx(styles.card, className)}>
             <div className={styles.avatarWrapper}>
                 <div className={styles.avatar}>
                     {friend.avatarUrl ? (
@@ -32,8 +42,17 @@ export function FriendCard({ friend, className }: FriendCardProps) {
             </div>
             <div className={styles.info}>
                 <p className={styles.name}>{friend.name}</p>
-                <p className={styles.status}>{friend.isOnline ? "Active now" : "Offline"}</p>
+                {hasRouteInfo ? (
+                    <p className={styles.route}>
+                        <MapPin className={styles.routeIcon} />
+                        <span>
+                            {friend.originStationName} → {friend.destinationStationName}
+                        </span>
+                    </p>
+                ) : (
+                    <p className={styles.status}>{friend.isOnline ? "Active now" : "Offline"}</p>
+                )}
             </div>
         </div>
     );
-}
+};

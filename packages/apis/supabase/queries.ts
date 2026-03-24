@@ -5,7 +5,7 @@
  * In production, these would be actual Supabase queries.
  */
 import { unstable_cache } from "next/cache";
-import type { Friend } from "@/packages/types/lib/types";
+import type { Friend, FriendOnConnection } from "@/packages/types/lib/types";
 import { getSupabaseClient } from "./client";
 
 /**
@@ -73,42 +73,69 @@ export async function getFriends(userId: string): Promise<Friend[]> {
 }
 
 /**
- * Get friends on a specific connection
- * Results are cached per user ID and connection ID for 30 seconds
+ * Get friends on the same physical train (trip_id match).
+ * Falls back to connection_id matching if no tripId is provided.
+ * Results are cached per user ID and tripId/connectionId for 30 seconds.
  */
 export async function getFriendsOnConnection(
     userId: string,
-    connectionId: string
-): Promise<Friend[]> {
-    // Use unstable_cache for request-time caching
+    connectionId: string,
+    tripId?: string
+): Promise<FriendOnConnection[]> {
+    const cacheKey = tripId
+        ? `friends-on-trip-${userId}-${tripId}`
+        : `friends-on-connection-${userId}-${connectionId}`;
+
     return unstable_cache(
         async () => {
-            // First, get user's friends
             const supabaseClient = getSupabaseClient();
 
             const friends = await getFriends(userId);
             const friendIds = friends.map(f => f.id);
 
-            // Then, get which friends are on this connection
-            const { data, error } = await supabaseClient
+            // Build query: prefer trip_id for same-train matching
+            let query = supabaseClient
                 .from("user_connections")
-                .select("user_id")
-                .eq("connection_id", connectionId)
+                .select(
+                    "user_id, origin_station_name, destination_station_name, departure_time, arrival_time"
+                )
                 .is("left_at", null)
                 .in("user_id", friendIds);
+
+            if (tripId) {
+                query = query.eq("trip_id", tripId);
+            } else {
+                query = query.eq("connection_id", connectionId);
+            }
+
+            const { data, error } = await query;
 
             if (error) {
                 console.error("Error fetching friends on connection:", error);
                 return [];
             }
 
-            const friendsOnConnection = (data || []).map(item => item.user_id);
+            const friendMap = new Map(friends.map(f => [f.id, f]));
 
-            return friends.filter(f => friendsOnConnection.includes(f.id));
+            return (data || [])
+                .map(item => {
+                    const friend = friendMap.get(item.user_id);
+                    if (!friend) {
+                        return null;
+                    }
+                    return {
+                        ...friend,
+                        originStationName: item.origin_station_name,
+                        destinationStationName: item.destination_station_name,
+                        departureTime: item.departure_time,
+                        arrivalTime: item.arrival_time,
+                    } as FriendOnConnection;
+                })
+                .filter((f): f is FriendOnConnection => f !== null);
         },
-        [`friends-on-connection-${userId}-${connectionId}`],
+        [cacheKey],
         {
-            revalidate: 30, // Cache for 30 seconds
+            revalidate: 30,
             tags: ["friends", "connections"],
         }
     )();

@@ -36,11 +36,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 1. **Before starting work:** Read `SPEC.md` to understand the project structure, existing patterns, and conventions.
 2. **After completing a feature or structural change:** Update `SPEC.md` to reflect what changed. This includes but is not limited to:
-   - New or removed API endpoints
-   - New or removed database tables/columns
-   - New or removed hooks
-   - New or removed UI components (atoms/molecules/organisms)
-   - New or removed server actions
-   - Changes to environment variables
-   - Changes to data fetching patterns or key design decisions
+    - New or removed API endpoints
+    - New or removed database tables/columns
+    - New or removed hooks
+    - New or removed UI components (atoms/molecules/organisms)
+    - New or removed server actions
+    - Changes to environment variables
+    - Changes to data fetching patterns or key design decisions
 3. **Keep updates minimal and precise.** Only update the sections that are affected by your changes. Do not rewrite unrelated sections.

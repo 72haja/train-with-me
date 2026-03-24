@@ -26,3 +26,18 @@ export interface FriendRequest {
 export interface FriendWithFriendshipId extends Friend {
     friendshipId: string;
 }
+
+/**
+ * Friend with route overlap information.
+ * Used when showing friends who share part of a trip (same physical train).
+ */
+export interface FriendOnConnection extends Friend {
+    /** The station where the friend boards */
+    originStationName: string | null;
+    /** The station where the friend alights */
+    destinationStationName: string | null;
+    /** The friend's departure time */
+    departureTime: string | null;
+    /** The friend's arrival time */
+    arrivalTime: string | null;
+}

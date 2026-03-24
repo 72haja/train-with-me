@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { FriendOnConnection } from "@/packages/types/lib/types";
 import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supabase/server";
 
 /**
  * POST /api/connections/friends
- * Given a list of connection IDs, returns which friends are on each connection.
- * Body: { connectionIds: string[] }
+ * Given a list of tripIds (physical trains), returns which friends are on each trip.
+ * Also accepts connectionIds for backward compatibility, but tripId-based matching is preferred.
+ * Body: { tripIds: string[], connectionIds?: string[] }
+ *
+ * Returns: { friends: Record<tripId, FriendOnConnection[]> }
  */
 export async function POST(request: NextRequest) {
     try {
@@ -20,9 +24,9 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const connectionIds: string[] = body.connectionIds ?? [];
+        const tripIds: string[] = body.tripIds ?? [];
 
-        if (connectionIds.length === 0) {
+        if (tripIds.length === 0) {
             return NextResponse.json({ friends: {} });
         }
 
@@ -68,26 +72,33 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ friends: {} });
         }
 
-        // 2. Check which friends are on which connections (service role bypasses RLS)
+        // 2. Check which friends are on trips with matching trip_id (service role bypasses RLS)
         const adminClient = createServiceRoleClient();
         const { data: friendConnections } = await adminClient
             .from("user_connections")
-            .select("user_id, connection_id")
-            .in("connection_id", connectionIds)
+            .select(
+                "user_id, connection_id, trip_id, origin_station_name, destination_station_name, departure_time, arrival_time"
+            )
+            .in("trip_id", tripIds)
             .in("user_id", friendIds)
             .is("left_at", null);
 
-        // 3. Group by connection ID
-        const friends: Record<string, { id: string; name: string; avatarUrl: string | null }[]> =
-            {};
+        // 3. Group by trip_id
+        const friends: Record<string, FriendOnConnection[]> = {};
 
         for (const fc of friendConnections ?? []) {
             const profile = friendProfiles[fc.user_id];
-            if (profile) {
-                if (!friends[fc.connection_id]) {
-                    friends[fc.connection_id] = [];
+            if (profile && fc.trip_id) {
+                if (!friends[fc.trip_id]) {
+                    friends[fc.trip_id] = [];
                 }
-                friends[fc.connection_id]!.push(profile);
+                friends[fc.trip_id]!.push({
+                    ...profile,
+                    originStationName: fc.origin_station_name,
+                    destinationStationName: fc.destination_station_name,
+                    departureTime: fc.departure_time,
+                    arrivalTime: fc.arrival_time,
+                });
             }
         }
 

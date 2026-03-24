@@ -31,6 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 line_type: body.lineType ?? null,
                 line_color: body.lineColor ?? null,
                 line_direction: body.lineDirection ?? null,
+                trip_id: body.tripId ?? null,
             };
         } catch {
             // No body or invalid JSON — that's fine, metadata is optional

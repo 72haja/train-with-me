@@ -123,6 +123,7 @@ export type Database = {
                     line_type: string | null;
                     origin_station_id: string | null;
                     origin_station_name: string | null;
+                    trip_id: string | null;
                     user_id: string;
                 };
                 Insert: {
@@ -140,6 +141,7 @@ export type Database = {
                     line_type?: string | null;
                     origin_station_id?: string | null;
                     origin_station_name?: string | null;
+                    trip_id?: string | null;
                     user_id: string;
                 };
                 Update: {
@@ -157,6 +159,7 @@ export type Database = {
                     line_type?: string | null;
                     origin_station_id?: string | null;
                     origin_station_name?: string | null;
+                    trip_id?: string | null;
                     user_id?: string;
                 };
                 Relationships: [];

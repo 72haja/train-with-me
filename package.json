@@ -39,5 +39,8 @@
         "supabase": "^2.83.0",
         "typescript": "^5.9.3"
     },
-    "prettier": "@becklyn/prettier"
+    "prettier": "@becklyn/prettier",
+    "overrides": {
+        "eslint": "^9.39.4"
+    }
 }

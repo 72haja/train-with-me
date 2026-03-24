@@ -2,12 +2,12 @@
 
 import { Users } from "lucide-react";
 import { motion } from "motion/react";
-import type { Friend } from "@/packages/types/lib/types";
+import type { Friend, FriendOnConnection } from "@/packages/types/lib/types";
 import { FriendCard } from "@ui/molecules/friend-card";
 import styles from "./friends-on-train-section.module.scss";
 
 interface FriendsOnTrainSectionProps {
-    friends: Friend[];
+    friends: (Friend | FriendOnConnection)[];
     delay?: number;
 }
 

@@ -11,7 +11,17 @@ import type { ConnectionsSearchParams } from "./useConnectionsSearch";
 import { useFavorites, useRouteFavoriteToggle } from "./useFavorites";
 import { useJoinedConnectionIds } from "./useJoinedConnectionIds";
 
-type FriendsMap = Record<string, { id: string; name: string; avatarUrl: string | null }[]>;
+type FriendOnConnectionResponse = {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    originStationName: string | null;
+    destinationStationName: string | null;
+    departureTime: string | null;
+    arrivalTime: string | null;
+};
+
+type FriendsMap = Record<string, FriendOnConnectionResponse[]>;
 
 export type UseConnectionsPageParams = {
     searchParams: ConnectionsSearchParams;
@@ -46,24 +56,25 @@ export function useConnectionsPage({
 
     const joinedConnectionIds = useJoinedConnectionIds();
 
-    // Fetch friends for all visible connections
-    const connectionIds = useMemo(() => rawConnections.map(c => c.id), [rawConnections]);
+    // Fetch friends for all visible connections using tripId (same physical train)
+    const tripIds = useMemo(
+        () => [...new Set(rawConnections.map(c => c.tripId).filter(Boolean))],
+        [rawConnections]
+    );
     const { data: friendsData } = useSWR(
-        user && connectionIds.length > 0
-            ? ["connections-friends", user.id, ...connectionIds]
-            : null,
+        user && tripIds.length > 0 ? ["connections-friends", user.id, ...tripIds] : null,
         () =>
             postFetcher<{ friends: FriendsMap }>("/api/connections/friends", {
-                connectionIds,
+                tripIds,
             })
     );
 
-    // Merge friends into connections
+    // Merge friends into connections (keyed by tripId)
     const connections = useMemo(() => {
         const friendsMap = friendsData?.friends ?? {};
         return rawConnections.map(c => ({
             ...c,
-            friends: (friendsMap[c.id] ?? []).map(f => ({
+            friends: (friendsMap[c.tripId] ?? []).map(f => ({
                 id: f.id,
                 name: f.name,
                 avatarUrl: f.avatarUrl ?? undefined,

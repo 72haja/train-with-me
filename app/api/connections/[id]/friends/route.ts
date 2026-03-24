@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { FriendOnConnection } from "@/packages/types/lib/types";
 import { createServerSupabaseClient, createServiceRoleClient } from "@apis/supabase/server";
 
 /**
- * GET /api/connections/[id]/friends
- * Returns friends of the current user who are also on this connection.
+ * GET /api/connections/[id]/friends?tripId=...
+ * Returns friends of the current user who are on the same physical train (matched by trip_id).
+ * Falls back to connection_id matching if no tripId query param is provided.
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id: connectionId } = await params;
+        const tripId = request.nextUrl.searchParams.get("tripId");
         const supabase = await createServerSupabaseClient();
 
         const {
@@ -61,18 +64,42 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
             return NextResponse.json({ friends: [] });
         }
 
-        // 2. Check which friends are on this connection (service role bypasses RLS)
+        // 2. Check which friends are on this trip (service role bypasses RLS)
         const adminClient = createServiceRoleClient();
-        const { data: friendConnections } = await adminClient
+
+        let query = adminClient
             .from("user_connections")
-            .select("user_id, connection_id")
-            .eq("connection_id", connectionId)
+            .select(
+                "user_id, connection_id, trip_id, origin_station_name, destination_station_name, departure_time, arrival_time"
+            )
             .in("user_id", friendIds)
             .is("left_at", null);
 
-        const friends = (friendConnections ?? [])
-            .map(fc => friendProfiles[fc.user_id])
-            .filter(Boolean);
+        // Prefer trip_id matching (same physical train, any boarding station)
+        // Fall back to connection_id matching for backward compatibility
+        if (tripId) {
+            query = query.eq("trip_id", tripId);
+        } else {
+            query = query.eq("connection_id", connectionId);
+        }
+
+        const { data: friendConnections } = await query;
+
+        const friends: FriendOnConnection[] = [];
+        for (const fc of friendConnections ?? []) {
+            const profile = friendProfiles[fc.user_id];
+            if (profile) {
+                friends.push({
+                    id: profile.id,
+                    name: profile.name,
+                    avatarUrl: profile.avatarUrl,
+                    originStationName: fc.origin_station_name,
+                    destinationStationName: fc.destination_station_name,
+                    departureTime: fc.departure_time,
+                    arrivalTime: fc.arrival_time,
+                });
+            }
+        }
 
         return NextResponse.json({ friends });
     } catch (error) {

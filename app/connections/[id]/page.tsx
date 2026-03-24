@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import useSWR from "swr";
 import { useMyConnections } from "@/app/hooks/useMyConnections";
 import { fetcher, postFetcher } from "@/app/lib/fetcher";
-import type { Connection } from "@/packages/types/lib/types";
+import type { Connection, FriendOnConnection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
 import styles from "./page.module.scss";
@@ -111,13 +111,15 @@ function ConnectionPageContent() {
         { revalidateOnFocus: false }
     );
 
-    // Fetch friends on this connection from Supabase
+    // Fetch friends on this trip from Supabase (tripId-based matching for partial route overlap)
+    const tripId = connection?.tripId;
+    const friendsUrl = tripId
+        ? `/api/connections/${connectionId}/friends?tripId=${encodeURIComponent(tripId)}`
+        : `/api/connections/${connectionId}/friends`;
+
     const { data: friendsData, mutate: mutateFriends } = useSWR(
-        user && connectionId ? [`/api/connections/${connectionId}/friends`, user.id] : null,
-        () =>
-            fetcher<{ friends: { id: string; name: string; avatarUrl: string | null }[] }>(
-                `/api/connections/${connectionId}/friends`
-            )
+        user && connectionId ? [friendsUrl, user.id] : null,
+        () => fetcher<{ friends: FriendOnConnection[] }>(friendsUrl)
     );
 
     // Merge Supabase friends into the connection object
@@ -129,6 +131,10 @@ function ConnectionPageContent() {
                   name: f.name,
                   avatarUrl: f.avatarUrl ?? undefined,
                   isOnline: false,
+                  originStationName: f.originStationName,
+                  destinationStationName: f.destinationStationName,
+                  departureTime: f.departureTime,
+                  arrivalTime: f.arrivalTime,
               })),
           }
         : null;
@@ -166,6 +172,7 @@ function ConnectionPageContent() {
                     lineType: connection.line.type,
                     lineColor: connection.line.color,
                     lineDirection: connection.line.direction,
+                    tripId: connection.tripId,
                 }),
             });
 
