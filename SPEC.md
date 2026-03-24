@@ -303,6 +303,7 @@ EFA responses are mapped in `packages/apis/vvs-efa/`:
 - **No stored timetable data.** All connection info is fetched live from VVS EFA. `user_connections` stores denormalized metadata only for display purposes.
 - **Friend matching by `trip_id`**, not `connection_id`. Two friends boarding the same physical train at different stations have different `connection_id`s but the same `trip_id`. The `FriendOnConnection` type extends `Friend` with the friend's boarding/alighting station names and times, so the UI can display which segment the friend shares.
 - **Soft delete for leaving connections.** `left_at` timestamp is set instead of deleting the row.
+- **Auto-cleanup of past connections.** When `GET /api/connections/me` is called, any active connection whose `arrival_time` (or `departure_time` as fallback) is in the past is automatically soft-deleted (`left_at` is set) and excluded from the response.
 - **Atomic Design for components.** Strict atoms/molecules/organisms hierarchy in `packages/ui/`.
 - **SCSS Modules per component.** Each component has its own `.module.scss` file in its directory.
 - **React Compiler enabled.** No manual `useMemo`/`useCallback` needed (compiler handles memoization).

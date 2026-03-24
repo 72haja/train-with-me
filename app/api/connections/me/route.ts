@@ -40,7 +40,7 @@ export async function GET(_request: NextRequest) {
         const { data, error } = await supabase
             .from("user_connections")
             .select(
-                "connection_id, origin_station_id, origin_station_name, destination_station_id, destination_station_name, departure_time, arrival_time, line_number, line_type, line_color, line_direction, trip_id"
+                "id, connection_id, origin_station_id, origin_station_name, destination_station_id, destination_station_name, departure_time, arrival_time, line_number, line_type, line_color, line_direction, trip_id"
             )
             .eq("user_id", user.id)
             .is("left_at", null);
@@ -50,7 +50,35 @@ export async function GET(_request: NextRequest) {
             return NextResponse.json({ error: "Failed to fetch connections" }, { status: 500 });
         }
 
-        const rows = (data ?? []) as UserConnectionRow[];
+        const allRows = (data ?? []) as (UserConnectionRow & { id: string })[];
+
+        // Auto-remove connections whose arrival (or departure as fallback) is in the past
+        const now = new Date();
+        const pastRowIds: string[] = [];
+        const rows: UserConnectionRow[] = [];
+
+        for (const row of allRows) {
+            const timeStr = row.arrival_time ?? row.departure_time;
+            if (timeStr && new Date(timeStr) < now) {
+                pastRowIds.push(row.id);
+            } else {
+                rows.push(row);
+            }
+        }
+
+        // Soft-delete past connections in the background
+        if (pastRowIds.length > 0) {
+            supabase
+                .from("user_connections")
+                .update({ left_at: new Date().toISOString() })
+                .in("id", pastRowIds)
+                .then(({ error: updateError }) => {
+                    if (updateError) {
+                        console.error("Error auto-removing past connections:", updateError);
+                    }
+                });
+        }
+
         const connectionIds = rows.map(row => row.connection_id);
 
         // Collect all trip_ids for trip-based matching
