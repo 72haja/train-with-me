@@ -1,28 +1,20 @@
 "use client";
 
 import { clsx } from "clsx";
+import { useMutation, useQuery } from "convex/react";
 import { Trash2 } from "lucide-react";
-import useSWR from "swr";
-import type { DbFavoriteConnection } from "@/packages/types/lib/types";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { EmptyTrainIcon } from "@ui/atoms/empty-train-icon";
 import styles from "./favorite-connections.module.scss";
 
-type FavoriteWithNames = DbFavoriteConnection & {
-    originStationName?: string | null;
-    destinationStationName?: string | null;
+type FavoriteWithNames = {
+    id: Id<"favoriteConnections">;
+    originStationId: string;
+    destinationStationId: string;
+    originStationName: string | null;
+    destinationStationName: string | null;
 };
-
-const FAVORITES_KEY = "/api/favorites";
-
-async function fetchFavorites(): Promise<FavoriteWithNames[]> {
-    const response = await fetch(FAVORITES_KEY);
-    if (!response.ok) {
-        if (response.status === 401) return [];
-        throw new Error(`Failed to load favorites: ${response.status}`);
-    }
-    const data = await response.json();
-    return (data.favorites ?? []) as FavoriteWithNames[];
-}
 
 interface FavoriteConnectionsContentProps {
     onSelectFavorite: (
@@ -34,30 +26,28 @@ interface FavoriteConnectionsContentProps {
     className?: string;
 }
 
-/**
- * Fetches favorites with SWR and renders the list. Suspends until the request resolves.
- * Wrap in <Suspense> with a skeleton fallback.
- */
-export function FavoriteConnectionsContent({
+export const FavoriteConnectionsContent = ({
     onSelectFavorite,
     className = "",
-}: FavoriteConnectionsContentProps) {
-    const { data: favorites = [], mutate } = useSWR(FAVORITES_KEY, fetchFavorites, {
-        suspense: true,
-    });
+}: FavoriteConnectionsContentProps) => {
+    const data = useQuery(api.favorites.list, {});
+    const removeFavorite = useMutation(api.favorites.removeFavorite);
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
+    const favorites: FavoriteWithNames[] = (data ?? []).map(fav => ({
+        id: fav.id,
+        originStationId: fav.originStationId,
+        destinationStationId: fav.destinationStationId,
+        originStationName: fav.originStationName,
+        destinationStationName: fav.destinationStationName,
+    }));
+
+    const handleDelete = async (
+        id: Id<"favoriteConnections">,
+        e: React.MouseEvent
+    ) => {
         e.stopPropagation();
         try {
-            const response = await fetch(`/api/favorites/${id}`, {
-                method: "DELETE",
-            });
-            if (response.ok) {
-                await mutate(
-                    favorites.filter(fav => fav.id !== id),
-                    { revalidate: false }
-                );
-            }
+            await removeFavorite({ favoriteId: id });
         } catch (error) {
             console.error("Failed to delete favorite:", error);
         }
@@ -117,4 +107,4 @@ export function FavoriteConnectionsContent({
             })}
         </div>
     );
-}
+};

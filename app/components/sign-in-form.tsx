@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Mail } from "lucide-react";
 import { motion } from "motion/react";
-import { signIn } from "@/app/actions/auth";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@ui/atoms/button";
 import { Alert } from "@ui/molecules/alert";
 import { AuthFooter } from "@ui/molecules/auth-footer";
@@ -12,9 +12,10 @@ import { AuthFormField } from "@ui/molecules/auth-form-field";
 import { AuthHeader } from "@ui/molecules/auth-header";
 import styles from "@ui/organisms/auth-screen/auth-screen.module.scss";
 
-export function SignInForm() {
+export const SignInForm = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { signIn } = useAuthActions();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -28,24 +29,15 @@ export function SignInForm() {
         setLoading(true);
         setError(null);
 
-        const formData = new FormData();
-        formData.append("email", email);
-        formData.append("password", password);
-
         try {
-            const result = await signIn(formData);
+            await signIn("password", {
+                email,
+                password,
+                flow: "signIn",
+            });
 
-            if (result?.error) {
-                setError(result.error);
-                setLoading(false);
-                return;
-            }
-
-            // Success - session is stored in cookies by server action
-            // Use full page navigation so the server reads the cookie correctly
             window.location.href = "/";
         } catch (err) {
-            // Handle unexpected errors
             setError(err instanceof Error ? err.message : "Sign in failed");
             setLoading(false);
         }
@@ -103,4 +95,4 @@ export function SignInForm() {
             <AuthFooter />
         </>
     );
-}
+};

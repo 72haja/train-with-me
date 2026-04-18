@@ -1,11 +1,11 @@
 "use client";
 
-import useSWR from "swr";
-import { fetcher } from "@/app/lib/fetcher";
-import { useSession } from "@apis/hooks/useSession";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export type MyConnectionFriend = {
-    id: string;
+    id: Id<"users">;
     name: string;
     avatarUrl: string | null;
 };
@@ -25,23 +25,31 @@ export type MyConnection = {
     friends: MyConnectionFriend[];
 };
 
-type MyConnectionsResponse = {
-    connectionIds: string[];
-    connections: MyConnection[];
-};
-
-export function useMyConnections() {
-    const { user } = useSession();
-
-    const { data, mutate } = useSWR(
-        user ? ["/api/connections/me", user.id] : null,
-        () => fetcher<MyConnectionsResponse>("/api/connections/me"),
-        { fallbackData: { connectionIds: [], connections: [] } }
-    );
+export const useMyConnections = () => {
+    const data = useQuery(api.userConnections.listMine, {});
 
     return {
         connectionIds: data?.connectionIds ?? [],
-        connections: data?.connections ?? [],
-        mutate,
+        connections:
+            data?.connections.map(
+                (c): MyConnection => ({
+                    id: c.id,
+                    originStationId: c.originStationId,
+                    originStationName: c.originStationName,
+                    destinationStationId: c.destinationStationId,
+                    destinationStationName: c.destinationStationName,
+                    departureTime: c.departureTime,
+                    arrivalTime: c.arrivalTime,
+                    lineNumber: c.lineNumber,
+                    lineType: c.lineType,
+                    lineColor: c.lineColor,
+                    lineDirection: c.lineDirection,
+                    friends: c.friends.map(f => ({
+                        id: f.id,
+                        name: f.name,
+                        avatarUrl: f.avatarUrl,
+                    })),
+                })
+            ) ?? [],
     };
-}
+};

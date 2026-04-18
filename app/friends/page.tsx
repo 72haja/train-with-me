@@ -2,51 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
-import useSWR from "swr";
-import type { FriendRequest, FriendWithFriendshipId } from "@/packages/types/lib/types";
-import { useSession } from "@apis/hooks/useSession";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { AddFriendForm } from "@ui/molecules/add-friend-form";
 import { Alert } from "@ui/molecules/alert";
 import { FriendCard } from "@ui/molecules/friend-card";
 import { FriendRequestList } from "@ui/molecules/friend-request-list";
 import styles from "./page.module.scss";
 
-async function fetchFriends(): Promise<FriendWithFriendshipId[]> {
-    const response = await fetch("/api/friends");
-    const data = await response.json();
-    if (response.ok && data.success) return data.data;
-    return [];
-}
-
-async function fetchRequests(): Promise<{ received: FriendRequest[]; sent: FriendRequest[] }> {
-    const response = await fetch("/api/friends/requests");
-    const data = await response.json();
-    if (response.ok && data.success) return data.data;
-    return { received: [], sent: [] };
-}
-
-export default function FriendsPage() {
+const FriendsPage = () => {
     const router = useRouter();
-    const { user } = useSession();
+    const friends = useQuery(api.friendships.list, {});
+    const requests = useQuery(api.friendships.listRequests, {});
+    const sendRequest = useMutation(api.friendships.sendRequest);
+    const acceptRequest = useMutation(api.friendships.acceptRequest);
+    const declineRequest = useMutation(api.friendships.declineRequest);
+    const removeFriendship = useMutation(api.friendships.remove);
     const [requestLoading, setRequestLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const {
-        data: friends = [],
-        isLoading: friendsLoading,
-        mutate: mutateFriends,
-    } = useSWR(user ? ["/api/friends", user.id] : null, fetchFriends);
-
-    const { data: requests = { received: [], sent: [] }, mutate: mutateRequests } = useSWR(
-        user ? ["/api/friends/requests", user.id] : null,
-        fetchRequests
-    );
-
-    // Auto-dismiss alerts after 10 seconds
     useEffect(() => {
         if (error || success) {
             const timer = setTimeout(() => {
@@ -77,6 +56,7 @@ export default function FriendsPage() {
         setSuccess(null);
 
         const emailError = validateEmail(email);
+
         if (emailError) {
             setError(emailError);
             return;
@@ -85,23 +65,11 @@ export default function FriendsPage() {
         setRequestLoading(true);
 
         try {
-            const response = await fetch("/api/friends/request", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim() }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                setSuccess("Friend request sent!");
-                setEmail("");
-                mutateRequests();
-            } else {
-                setError(data.error || "Failed to send friend request");
-            }
-        } catch {
-            setError("Failed to send friend request");
+            await sendRequest({ email: email.trim() });
+            setSuccess("Friend request sent!");
+            setEmail("");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to send friend request");
         } finally {
             setRequestLoading(false);
         }
@@ -109,36 +77,23 @@ export default function FriendsPage() {
 
     const handleAccept = async (requestId: string) => {
         try {
-            const response = await fetch(`/api/friends/${requestId}/accept`, {
-                method: "POST",
+            await acceptRequest({
+                friendshipId: requestId as Id<"friendships">,
             });
-
-            if (response.ok) {
-                mutateFriends();
-                mutateRequests();
-                setSuccess("Friend request accepted!");
-            } else {
-                setError("Failed to accept friend request");
-            }
-        } catch {
-            setError("Failed to accept friend request");
+            setSuccess("Friend request accepted!");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to accept friend request");
         }
     };
 
     const handleDecline = async (requestId: string) => {
         try {
-            const response = await fetch(`/api/friends/${requestId}/decline`, {
-                method: "POST",
+            await declineRequest({
+                friendshipId: requestId as Id<"friendships">,
             });
-
-            if (response.ok) {
-                mutateRequests();
-                setSuccess("Friend request declined");
-            } else {
-                setError("Failed to decline friend request");
-            }
-        } catch {
-            setError("Failed to decline friend request");
+            setSuccess("Friend request declined");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to decline friend request");
         }
     };
 
@@ -148,18 +103,12 @@ export default function FriendsPage() {
         }
 
         try {
-            const response = await fetch(`/api/friends/${friendshipId}`, {
-                method: "DELETE",
+            await removeFriendship({
+                friendshipId: friendshipId as Id<"friendships">,
             });
-
-            if (response.ok) {
-                mutateFriends();
-                setSuccess("Friend removed");
-            } else {
-                setError("Failed to remove friend");
-            }
-        } catch {
-            setError("Failed to remove friend");
+            setSuccess("Friend removed");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to remove friend");
         }
     };
 
@@ -171,6 +120,11 @@ export default function FriendsPage() {
             .toUpperCase()
             .substring(0, 2);
     };
+
+    const friendsList = friends ?? [];
+    const received = requests?.received ?? [];
+    const sent = requests?.sent ?? [];
+    const friendsLoading = friends === undefined;
 
     return (
         <div className={styles.container}>
@@ -200,8 +154,18 @@ export default function FriendsPage() {
                 />
 
                 <FriendRequestList
-                    title={`Friend Requests (${requests.received.length})`}
-                    requests={requests.received}
+                    title={`Friend Requests (${received.length})`}
+                    requests={received.map(r => ({
+                        id: r.id,
+                        type: r.type,
+                        user: {
+                            id: r.user.id,
+                            name: r.user.name,
+                            avatarUrl: r.user.avatarUrl,
+                            email: r.user.email,
+                        },
+                        createdAt: new Date(r.createdAt).toISOString(),
+                    }))}
                     onAccept={handleAccept}
                     onDecline={handleDecline}
                     getInitials={getInitials}
@@ -209,22 +173,31 @@ export default function FriendsPage() {
                 />
 
                 <FriendRequestList
-                    title={`Sent Requests (${requests.sent.length})`}
-                    requests={requests.sent}
+                    title={`Sent Requests (${sent.length})`}
+                    requests={sent.map(r => ({
+                        id: r.id,
+                        type: r.type,
+                        user: {
+                            id: r.user.id,
+                            name: r.user.name,
+                            avatarUrl: r.user.avatarUrl,
+                            email: r.user.email,
+                        },
+                        createdAt: new Date(r.createdAt).toISOString(),
+                    }))}
                     getInitials={getInitials}
                     delay={0.2}
                 />
 
-                {/* Friends List Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                     className={styles.section}>
-                    <h2 className={styles.sectionTitle}>My Friends ({friends.length})</h2>
+                    <h2 className={styles.sectionTitle}>My Friends ({friendsList.length})</h2>
                     {friendsLoading ? (
                         <div className={styles.loading}>Loading...</div>
-                    ) : friends.length === 0 ? (
+                    ) : friendsList.length === 0 ? (
                         <div className={styles.emptyState}>
                             <p className={styles.emptyText}>No friends yet</p>
                             <p className={styles.emptySubtext}>
@@ -233,8 +206,8 @@ export default function FriendsPage() {
                         </div>
                     ) : (
                         <div className={styles.friendsList}>
-                            {friends.map(friend => (
-                                <div key={friend.id} className={styles.friendItem}>
+                            {friendsList.map(friend => (
+                                <div key={friend.friendshipId} className={styles.friendItem}>
                                     <FriendCard
                                         friend={{
                                             id: friend.id,
@@ -258,4 +231,6 @@ export default function FriendsPage() {
             </main>
         </div>
     );
-}
+};
+
+export default FriendsPage;

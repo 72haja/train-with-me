@@ -3,14 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ConnectionsContent } from "@/app/connections/connections-content";
-import { createServerSupabaseClient } from "@apis/supabase/server";
+import { convexAuthNextjsToken, isAuthenticatedNextjs } from "@convex-dev/auth/nextjs/server";
 import styles from "./page.module.scss";
 
 type PageProps = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-function ConnectionsLoading() {
+const ConnectionsLoading = () => {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -47,18 +47,15 @@ function ConnectionsLoading() {
             </main>
         </div>
     );
-}
+};
 
-async function ConnectionsPageInner({ searchParams }: PageProps) {
-    const supabase = await createServerSupabaseClient();
-    const {
-        data: { user },
-        error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+const ConnectionsPageInner = async ({ searchParams }: PageProps) => {
+    if (!(await isAuthenticatedNextjs())) {
         redirect("/auth/signin");
     }
+
+    // Token is read here to ensure the server-rendered page is not cached across users.
+    await convexAuthNextjsToken();
 
     const params = await searchParams;
     const originId = typeof params.origin === "string" ? params.origin : null;
@@ -82,16 +79,14 @@ async function ConnectionsPageInner({ searchParams }: PageProps) {
             }}
         />
     );
-}
+};
 
-/**
- * Connections search results page (Server Component).
- * Server only does auth + params; connections/favorites load on the client with skeletons.
- */
-export default function ConnectionsPage(props: PageProps) {
+const ConnectionsPage = (props: PageProps) => {
     return (
         <Suspense fallback={<ConnectionsLoading />}>
             <ConnectionsPageInner searchParams={props.searchParams} />
         </Suspense>
     );
-}
+};
+
+export default ConnectionsPage;

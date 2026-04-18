@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, User } from "lucide-react";
 import { motion } from "motion/react";
-import { signUp } from "@/app/actions/auth";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@ui/atoms/button";
 import { Alert } from "@ui/molecules/alert";
 import { AuthFooter } from "@ui/molecules/auth-footer";
@@ -13,9 +13,10 @@ import { AuthHeader } from "@ui/molecules/auth-header";
 import { PasswordInput } from "@ui/molecules/password-input";
 import styles from "@ui/organisms/auth-screen/auth-screen.module.scss";
 
-export function SignUpForm() {
+export const SignUpForm = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { signIn } = useAuthActions();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
@@ -30,26 +31,16 @@ export function SignUpForm() {
         setLoading(true);
         setError(null);
 
-        const formData = new FormData();
-        formData.append("email", email);
-        formData.append("password", password);
-        formData.append("fullName", fullName);
-
         try {
-            const result = await signUp(formData);
+            await signIn("password", {
+                email,
+                password,
+                fullName,
+                flow: "signUp",
+            });
 
-            if (result?.error) {
-                setError(result.error);
-                setLoading(false);
-                return;
-            }
-
-            // Success - session is stored in cookies by server action
-            // Redirect to home page
-            router.push("/");
-            router.refresh();
+            window.location.href = "/";
         } catch (err) {
-            // Handle unexpected errors
             setError(err instanceof Error ? err.message : "Sign up failed");
             setLoading(false);
         }
@@ -120,4 +111,4 @@ export function SignUpForm() {
             <AuthFooter />
         </>
     );
-}
+};

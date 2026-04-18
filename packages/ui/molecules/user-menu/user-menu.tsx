@@ -5,14 +5,14 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, User, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { signOut as signOutAction } from "@/app/actions/auth";
 import { useSession } from "@apis/hooks/useSession";
-import { getSupabaseClient } from "@apis/supabase/client";
+import { useAuthActions } from "@convex-dev/auth/react";
 import styles from "./user-menu.module.scss";
 
-export function UserMenu() {
+export const UserMenu = () => {
     const router = useRouter();
     const { user } = useSession();
+    const { signOut } = useAuthActions();
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -24,19 +24,17 @@ export function UserMenu() {
         };
 
         document.addEventListener("mousedown", handleClickOutside);
+
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const handleSignOut = async () => {
         try {
-            await signOutAction();
+            await signOut();
             router.push("/auth/signin");
             router.refresh();
         } catch (error) {
             console.error("Sign out error:", error);
-            // Fallback: sign out client-side
-            const supabase = getSupabaseClient();
-            await supabase.auth.signOut();
             router.push("/auth/signin");
             router.refresh();
         }
@@ -52,10 +50,30 @@ export function UserMenu() {
         router.push("/friends");
     };
 
+    const fullName = user?.fullName ?? null;
+    const email = user?.email ?? "";
+    const avatarUrl = user?.avatarUrl ?? null;
+
     const userInitials = (() => {
-        if (!user?.email) return "U";
-        const emailPart = user.email.split("@")[0];
-        return emailPart ? emailPart.substring(0, 2).toUpperCase() : "U";
+        if (fullName) {
+            const initials = fullName
+                .split(" ")
+                .map(n => n[0])
+                .join("")
+                .toUpperCase()
+                .substring(0, 2);
+
+            if (initials.length > 0) {
+                return initials;
+            }
+        }
+
+        if (email.length > 0) {
+            const emailPart = email.split("@")[0];
+            return emailPart ? emailPart.substring(0, 2).toUpperCase() : "U";
+        }
+
+        return "U";
     })();
 
     return (
@@ -66,10 +84,10 @@ export function UserMenu() {
                 className={styles.trigger}
                 aria-label="User menu">
                 <div className={styles.avatar}>
-                    {user?.user_metadata?.avatar_url ? (
+                    {avatarUrl ? (
                         <Image
-                            src={user.user_metadata.avatar_url}
-                            alt={user.email || "User"}
+                            src={avatarUrl}
+                            alt={email || "User"}
                             width={32}
                             height={32}
                             className={styles.avatarImage}
@@ -91,10 +109,10 @@ export function UserMenu() {
                         className={styles.menu}>
                         <div className={styles.menuHeader}>
                             <div className={styles.menuAvatar}>
-                                {user?.user_metadata?.avatar_url ? (
+                                {avatarUrl ? (
                                     <Image
-                                        src={user.user_metadata.avatar_url}
-                                        alt={user.email || "User"}
+                                        src={avatarUrl}
+                                        alt={email || "User"}
                                         width={48}
                                         height={48}
                                         className={styles.menuAvatarImage}
@@ -106,10 +124,8 @@ export function UserMenu() {
                                 )}
                             </div>
                             <div className={styles.menuUserInfo}>
-                                <p className={styles.menuUserName}>
-                                    {user?.user_metadata?.full_name || "User"}
-                                </p>
-                                <p className={styles.menuUserEmail}>{user?.email}</p>
+                                <p className={styles.menuUserName}>{fullName || "User"}</p>
+                                <p className={styles.menuUserEmail}>{email}</p>
                             </div>
                         </div>
 
@@ -140,4 +156,4 @@ export function UserMenu() {
             </AnimatePresence>
         </div>
     );
-}
+};

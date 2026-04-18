@@ -2,29 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMutation } from "convex/react";
 import { ArrowLeft } from "lucide-react";
-import { updateEmail, updatePassword, updateProfile } from "@/app/actions/profile";
 import styles from "@/app/profile/page.module.scss";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { useSession } from "@apis/hooks/useSession";
-import { getSupabaseClient } from "@apis/supabase/client";
 import { Alert } from "@ui/molecules/alert";
 import { AvatarUploadSection } from "@ui/molecules/avatar-upload-section";
-import { EmailFormSection } from "@ui/molecules/email-form-section";
-import { PasswordFormSection } from "@ui/molecules/password-form-section";
 import { ProfileFormSection } from "@ui/molecules/profile-form-section";
 
-export function ProfileContent() {
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
+export const ProfileContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user } = useSession();
+    const updateProfile = useMutation(api.users.updateProfile);
+    const generateUploadUrl = useMutation(api.users.generateAvatarUploadUrl);
+    const setAvatar = useMutation(api.users.setAvatar);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
     useEffect(() => {
@@ -40,52 +40,9 @@ export function ProfileContent() {
 
     useEffect(() => {
         if (user) {
-            setFullName(user.user_metadata?.full_name || "");
-            setEmail(user.email || "");
-            setAvatarUrl(user.user_metadata?.avatar_url || null);
+            setFullName(user.fullName ?? "");
         }
     }, [user]);
-
-    const handleEmailUpdate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccess(null);
-
-        const formData = new FormData();
-        formData.append("email", email);
-
-        try {
-            await updateEmail(formData);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to update email");
-            setLoading(false);
-        }
-    };
-
-    const handlePasswordUpdate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        setSuccess(null);
-
-        if (password !== confirmPassword) {
-            setError("Passwords do not match");
-            setLoading(false);
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("password", password);
-        formData.append("confirmPassword", confirmPassword);
-
-        try {
-            await updatePassword(formData);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to update password");
-            setLoading(false);
-        }
-    };
 
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,90 +50,51 @@ export function ProfileContent() {
         setError(null);
         setSuccess(null);
 
-        const formData = new FormData();
-        formData.append("fullName", fullName);
-        if (avatarUrl) {
-            formData.append("avatarUrl", avatarUrl);
-        }
-
         try {
-            await updateProfile(formData);
+            await updateProfile({ fullName });
+            setSuccess("Profile updated");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to update profile");
+        } finally {
             setLoading(false);
         }
     };
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+            return;
+        }
 
         setUploadingAvatar(true);
         setError(null);
 
         try {
-            const supabase = getSupabaseClient();
-
-            // Validate file type
             if (!file.type.startsWith("image/")) {
                 throw new Error("File must be an image");
             }
 
-            // Validate file size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
+            if (file.size > MAX_AVATAR_BYTES) {
                 throw new Error("File size must be less than 5MB");
             }
 
-            // Create file path
-            const fileExt = file.name.split(".").pop();
-            const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-            const filePath = `${user?.id}/${fileName}`;
-
-            // Upload directly to Supabase Storage
-            const { error: uploadError } = await supabase.storage
-                .from("avatars")
-                .upload(filePath, file, {
-                    cacheControl: "3600",
-                    upsert: false,
-                });
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            // Get public URL
-            const {
-                data: { publicUrl },
-            } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-            // Update user metadata and profile
-            const { error: updateError } = await supabase.auth.updateUser({
-                data: {
-                    avatar_url: publicUrl,
-                },
+            const uploadUrl = await generateUploadUrl();
+            const result = await fetch(uploadUrl, {
+                method: "POST",
+                headers: { "Content-Type": file.type },
+                body: file,
             });
 
-            if (updateError) {
-                console.error("Error updating user metadata:", updateError);
+            if (!result.ok) {
+                throw new Error("Upload failed");
             }
 
-            if (!user) {
-                throw new Error("User not found");
-            }
+            const { storageId } = (await result.json()) as {
+                storageId: Id<"_storage">;
+            };
 
-            // Update profile table
-            await supabase.from("profiles").upsert(
-                {
-                    id: user.id,
-                    avatar_url: publicUrl,
-                    updated_at: new Date().toISOString(),
-                },
-                {
-                    onConflict: "id",
-                }
-            );
-
-            setAvatarUrl(publicUrl);
+            await setAvatar({ storageId });
             setSuccess("Avatar uploaded successfully");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to upload avatar");
@@ -184,6 +102,8 @@ export function ProfileContent() {
             setUploadingAvatar(false);
         }
     };
+
+    const email = user?.email ?? "";
 
     const userInitials = fullName
         ? fullName
@@ -216,7 +136,7 @@ export function ProfileContent() {
                 {success && <Alert message={success} type="success" />}
 
                 <AvatarUploadSection
-                    avatarUrl={avatarUrl}
+                    avatarUrl={user?.avatarUrl ?? null}
                     userInitials={userInitials}
                     uploading={uploadingAvatar}
                     onUpload={handleAvatarUpload}
@@ -228,23 +148,7 @@ export function ProfileContent() {
                     onSubmit={handleProfileUpdate}
                     loading={loading}
                 />
-
-                <EmailFormSection
-                    email={email}
-                    onEmailChange={setEmail}
-                    onSubmit={handleEmailUpdate}
-                    loading={loading}
-                />
-
-                <PasswordFormSection
-                    password={password}
-                    confirmPassword={confirmPassword}
-                    onPasswordChange={setPassword}
-                    onConfirmPasswordChange={setConfirmPassword}
-                    onSubmit={handlePasswordUpdate}
-                    loading={loading}
-                />
             </main>
         </>
     );
-}
+};

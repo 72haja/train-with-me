@@ -2,30 +2,32 @@
 
 import { Suspense, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
 import useSWR from "swr";
 import { useMyConnections } from "@/app/hooks/useMyConnections";
-import { fetcher, postFetcher } from "@/app/lib/fetcher";
-import type { Connection, FriendOnConnection } from "@/packages/types/lib/types";
+import { postFetcher } from "@/app/lib/fetcher";
+import { api } from "@/convex/_generated/api";
+import type { Connection } from "@/packages/types/lib/types";
 import { useSession } from "@apis/hooks/useSession";
 import { TrainDetailsScreen } from "@ui/organisms/train-details-screen";
 import styles from "./page.module.scss";
 
-async function fetchConnection(
+const fetchConnection = async (
     connectionId: string,
     originId: string,
     destinationId: string,
     departure: string
-): Promise<Connection | null> {
-    // 1. Try sessionStorage first (instant, from card click)
+): Promise<Connection | null> => {
     try {
         const stored = sessionStorage.getItem(`connection-${connectionId}`);
-        if (stored) return JSON.parse(stored) as Connection;
+        if (stored) {
+            return JSON.parse(stored) as Connection;
+        }
     } catch {
         // ignore
     }
 
-    // 2. Re-fetch from EFA using search context
     const data = await postFetcher<{ connections: Connection[] }>("/api/connections/search", {
         originId,
         destinationId,
@@ -35,7 +37,6 @@ async function fetchConnection(
 
     const match = (data.connections ?? []).find(c => c.id === connectionId) ?? null;
 
-    // Cache for next time
     if (match) {
         try {
             sessionStorage.setItem(`connection-${connectionId}`, JSON.stringify(match));
@@ -45,9 +46,9 @@ async function fetchConnection(
     }
 
     return match;
-}
+};
 
-function ConnectionDetailLoadingShell({ onBack }: { onBack: () => void }) {
+const ConnectionDetailLoadingShell = ({ onBack }: { onBack: () => void }) => {
     return (
         <div className={styles.container}>
             <header className={styles.loadingHeader}>
@@ -81,18 +82,18 @@ function ConnectionDetailLoadingShell({ onBack }: { onBack: () => void }) {
             </main>
         </div>
     );
-}
+};
 
-/**
- * Inner content: uses useParams (uncached). Must be inside Suspense so the route can prerender.
- */
-function ConnectionPageContent() {
+const ConnectionPageContent = () => {
     const params = useParams();
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user, loading: authLoading } = useSession();
-    const { connectionIds, mutate: mutateMyConnections } = useMyConnections();
+    const { connectionIds } = useMyConnections();
     const [optimisticJoined, setOptimisticJoined] = useState<boolean | null>(null);
+
+    const joinMutation = useMutation(api.userConnections.join);
+    const leaveMutation = useMutation(api.userConnections.leave);
 
     const connectionId = params.id as string;
     const originId = searchParams.get("origin");
@@ -101,32 +102,29 @@ function ConnectionPageContent() {
 
     const canFetch = !!connectionId && !!originId && !!destinationId && !!departure && !!user;
 
-    const {
-        data: connection,
-        isLoading,
-        mutate,
-    } = useSWR(
+    const { data: connection, isLoading } = useSWR(
         canFetch ? ["connection-detail", connectionId, user?.id] : null,
-        () => fetchConnection(connectionId, originId!, destinationId!, departure!),
+        () =>
+            fetchConnection(
+                connectionId,
+                originId as string,
+                destinationId as string,
+                departure as string
+            ),
         { revalidateOnFocus: false }
     );
 
-    // Fetch friends on this trip from Supabase (tripId-based matching for partial route overlap)
-    const tripId = connection?.tripId;
-    const friendsUrl = tripId
-        ? `/api/connections/${connectionId}/friends?tripId=${encodeURIComponent(tripId)}`
-        : `/api/connections/${connectionId}/friends`;
+    const tripId = connection?.tripId ?? undefined;
 
-    const { data: friendsData, mutate: mutateFriends } = useSWR(
-        user && connectionId ? [friendsUrl, user.id] : null,
-        () => fetcher<{ friends: FriendOnConnection[] }>(friendsUrl)
+    const friendsData = useQuery(
+        api.userConnections.friendsOnConnection,
+        user && connectionId ? { connectionId, tripId } : "skip"
     );
 
-    // Merge Supabase friends into the connection object
     const connectionWithFriends = connection
         ? {
               ...connection,
-              friends: (friendsData?.friends ?? []).map(f => ({
+              friends: (friendsData ?? []).map(f => ({
                   id: f.id,
                   name: f.name,
                   avatarUrl: f.avatarUrl ?? undefined,
@@ -139,7 +137,6 @@ function ConnectionPageContent() {
           }
         : null;
 
-    // Server-backed presence check, with optimistic override for join/leave
     const isUserOnConnection =
         optimisticJoined !== null ? optimisticJoined : connectionIds.includes(connectionId);
 
@@ -147,68 +144,49 @@ function ConnectionPageContent() {
         router.back();
     };
 
-    // Redirect if not authenticated
     if (!authLoading && !user) {
         router.push("/auth/signin");
         return null;
     }
 
     const handleJoinConnection = async (connectionIdParam: string) => {
-        if (!connection || !user) return;
+        if (!connection || !user) {
+            return;
+        }
 
         try {
             setOptimisticJoined(true);
-            const response = await fetch(`/api/connections/${connectionIdParam}/join`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    originStationId: originId,
-                    originStationName: connection.departure.station.name,
-                    destinationStationId: destinationId,
-                    destinationStationName: connection.arrival.station.name,
-                    departureTime: connection.departure.scheduledDeparture,
-                    arrivalTime: connection.arrival.scheduledDeparture,
-                    lineNumber: connection.line.number,
-                    lineType: connection.line.type,
-                    lineColor: connection.line.color,
-                    lineDirection: connection.line.direction,
-                    tripId: connection.tripId,
-                }),
+            await joinMutation({
+                connectionId: connectionIdParam,
+                tripId: connection.tripId ?? undefined,
+                originStationId: originId ?? undefined,
+                originStationName: connection.departure.station.name,
+                destinationStationId: destinationId ?? undefined,
+                destinationStationName: connection.arrival.station.name,
+                departureTime: connection.departure.scheduledDeparture,
+                arrivalTime: connection.arrival.scheduledDeparture,
+                lineNumber: connection.line.number,
+                lineType: connection.line.type,
+                lineColor: connection.line.color,
+                lineDirection: connection.line.direction,
             });
-
-            if (response.ok) {
-                mutateMyConnections();
-                mutateFriends();
-            } else {
-                setOptimisticJoined(null);
-                console.error("Failed to join connection");
-            }
-        } catch (error) {
+        } catch (err) {
             setOptimisticJoined(null);
-            console.error("Error joining connection:", error);
+            console.error("Error joining connection:", err);
         }
     };
 
     const handleLeaveConnection = async () => {
-        if (!connection) return;
+        if (!connection) {
+            return;
+        }
 
         try {
             setOptimisticJoined(false);
-            const response = await fetch(`/api/connections/${connectionId}/leave`, {
-                method: "POST",
-            });
-
-            if (response.ok) {
-                mutateMyConnections();
-                mutateFriends();
-                mutate();
-            } else {
-                setOptimisticJoined(null);
-                console.error("Failed to leave connection");
-            }
-        } catch (error) {
+            await leaveMutation({ connectionId });
+        } catch (err) {
             setOptimisticJoined(null);
-            console.error("Error leaving connection:", error);
+            console.error("Error leaving connection:", err);
         }
     };
 
@@ -235,16 +213,14 @@ function ConnectionPageContent() {
             />
         </div>
     );
-}
+};
 
-/**
- * Connection detail page - view a specific connection.
- * Wrapped in Suspense so useParams (uncached data) does not block the route during prerender.
- */
-export default function ConnectionPage() {
+const ConnectionPage = () => {
     return (
         <Suspense fallback={<ConnectionDetailLoadingShell onBack={() => window.history.back()} />}>
             <ConnectionPageContent />
         </Suspense>
     );
-}
+};
+
+export default ConnectionPage;

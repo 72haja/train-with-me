@@ -1,46 +1,50 @@
-/**
- * React Hook: useSession
- *
- * Simple hook for reading the current user session from Supabase.
- * Session is managed by Supabase (cookies for SSR, localStorage for client).
- */
-import { useEffect, useMemo, useState } from "react";
-import { getSupabaseClient } from "@apis/supabase/client";
-import type { Session, User } from "@supabase/supabase-js";
+"use client";
 
-interface UseSessionResult {
-    user: User | null;
+import { useConvexAuth, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+
+export type SessionUser = {
+    id: Id<"users">;
+    email: string | null;
+    fullName: string | null;
+    avatarUrl: string | null;
+};
+
+type UseSessionResult = {
+    user: SessionUser | null;
     loading: boolean;
-}
+    isAuthenticated: boolean;
+};
 
-export function useSession(): UseSessionResult {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+export const useSession = (): UseSessionResult => {
+    const { isLoading, isAuthenticated } = useConvexAuth();
+    const currentUser = useQuery(api.users.getCurrentUser, isAuthenticated ? {} : "skip");
 
-    const supabaseClient = useMemo(() => getSupabaseClient(), []);
+    if (isLoading) {
+        return { user: null, loading: true, isAuthenticated: false };
+    }
 
-    useEffect(() => {
-        // Get initial session
-        supabaseClient.auth
-            .getSession()
-            .then(({ data: { session } }: { data: { session: Session | null } }) => {
-                setUser(session?.user ?? null);
-                setLoading(false);
-            });
+    if (!isAuthenticated) {
+        return { user: null, loading: false, isAuthenticated: false };
+    }
 
-        // Listen for auth changes
-        const {
-            data: { subscription },
-        } = supabaseClient.auth.onAuthStateChange((_event: string, session: Session | null) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+    if (currentUser === undefined) {
+        return { user: null, loading: true, isAuthenticated: true };
+    }
 
-        return () => subscription.unsubscribe();
-    }, [supabaseClient]);
+    if (currentUser === null) {
+        return { user: null, loading: false, isAuthenticated: true };
+    }
 
     return {
-        user,
-        loading,
+        user: {
+            id: currentUser._id,
+            email: currentUser.email,
+            fullName: currentUser.fullName,
+            avatarUrl: currentUser.avatarUrl,
+        },
+        loading: false,
+        isAuthenticated: true,
     };
-}
+};
