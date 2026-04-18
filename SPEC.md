@@ -10,20 +10,21 @@ No timetable data is stored long-term. All connection data is fetched live from 
 
 ## Tech Stack
 
-| Layer         | Technology                                            |
-| ------------- | ----------------------------------------------------- |
-| Framework     | Next.js 16.1.6 (App Router)                           |
-| Language      | TypeScript 5.9                                        |
-| Runtime       | Bun                                                   |
-| React         | React 19.2 with React Compiler enabled                |
-| Database      | Supabase (PostgreSQL) with RLS                        |
-| Auth          | Supabase Auth (email/password)                        |
-| Transit Data  | VVS EFA public API (no auth required)                 |
-| Styling       | SCSS Modules (per-component), Tailwind CSS classes    |
-| Animations    | motion (Framer Motion v12)                            |
-| Data Fetching | SWR (client), `"use cache"` (server)                  |
-| Icons         | lucide-react                                          |
-| Linting       | @becklyn/eslint, @becklyn/prettier, @becklyn/tsconfig |
+| Layer         | Technology                                                              |
+| ------------- | ----------------------------------------------------------------------- |
+| Framework     | Next.js 16.2.4 (App Router)                                             |
+| Language      | TypeScript 5.9                                                          |
+| Runtime       | Bun                                                                     |
+| React         | React 19.2 with React Compiler enabled                                  |
+| Database      | Convex (reactive document store)                                        |
+| Auth          | Convex Auth (`@convex-dev/auth` Password provider)                      |
+| File Storage  | Convex file storage (avatars)                                           |
+| Transit Data  | VVS EFA public API (no auth required)                                   |
+| Styling       | SCSS Modules (per-component), Tailwind CSS classes                      |
+| Animations    | motion (Framer Motion v12)                                              |
+| Data Fetching | Convex hooks (`useQuery`, `useMutation`, `useAction`) + SWR (EFA proxy) |
+| Icons         | lucide-react                                                            |
+| Linting       | @becklyn/eslint, @becklyn/prettier, @becklyn/tsconfig                   |
 
 ---
 
@@ -32,13 +33,10 @@ No timetable data is stored long-term. All connection data is fetched live from 
 ```
 train-with-me/
   app/                        # Next.js App Router
-    actions/                  # Server actions (auth, profile)
-    api/                      # API route handlers
-      connections/            # Search, join, leave, friends-on-train
-      favorites/              # Favorite routes CRUD
-      friends/                # Friendships, requests, accept/decline
+    api/                      # API route handlers (EFA proxies only)
+      connections/search/     # Live connection search via EFA
       stations/               # Station search via EFA
-      vvs/                    # Departure monitor (cached)
+      vvs/departures/         # Departure monitor (cached)
     auth/                     # Sign-in / Sign-up pages
     components/               # Page-level client components (forms, profile)
     connections/              # Connections search results + detail pages
@@ -48,17 +46,30 @@ train-with-me/
     hooks/                    # App-level hooks (useMyConnections)
     lib/                      # Utilities (fetcher, server-data helpers)
     profile/                  # User profile page
-    layout.tsx                # Root layout (Geist fonts)
+    ConvexClientProvider.tsx  # Client-side ConvexAuthNextjsProvider wrapper
+    layout.tsx                # Root layout (Geist fonts + ConvexAuthNextjsServerProvider)
     page.tsx                  # Home page (redirects if unauthenticated)
     globals.scss              # Global styles and design tokens
 
+  convex/                     # Convex backend
+    _generated/               # Auto-generated types (do not edit)
+    auth.config.ts            # JWT provider config for Convex Auth
+    auth.ts                   # convexAuth() setup with Password provider + createOrUpdateUser callback
+    http.ts                   # HTTP routes for auth callbacks
+    schema.ts                 # Data model (users + authTables, friendships, userConnections, favoriteConnections)
+    users.ts                  # Current user queries, profile + avatar mutations
+    friendships.ts            # Friends list/requests + accept/decline/remove mutations
+    userConnections.ts        # Join/leave/list + friends-on-trip queries
+    favorites.ts              # Favorites list/add (action -> EFA for station names)/remove
+    migration.ts              # Supabase -> Convex bulk import action
+
+  middleware.ts               # Convex Auth Next.js middleware (protects pages, redirects unauth users)
+
   packages/
     apis/                     # API clients and data access
-      hooks/                  # useSession (auth state hook)
-      supabase/               # Supabase client factories, DB types, queries
+      hooks/                  # useSession (Convex-backed)
       vvs-efa/                # VVS EFA API client, mappers, types
       mockStations.ts         # Fallback station data
-      supabase.ts             # Legacy client file (mostly unused)
     types/                    # Shared TypeScript type definitions
       lib/types/              # Connection, Station, Friend types
     ui/                       # Component library (Atomic Design)
@@ -67,9 +78,7 @@ train-with-me/
       organisms/              # HomeScreen, TrainDetailsScreen, AuthScreen
 
   scripts/
-    gen-types.ts              # Generates Supabase DB types from remote schema
-
-  supabase/                   # Supabase local config (mostly empty)
+    migrate-from-supabase.ts  # One-off migration script: Supabase -> Convex
 ```
 
 ### Path Aliases (tsconfig)
@@ -83,74 +92,77 @@ train-with-me/
 
 ---
 
-## Database Schema (Supabase / PostgreSQL)
+## Data Model (Convex)
 
-### `profiles`
+Defined in `convex/schema.ts`. Types are auto-generated into `convex/_generated/dataModel.d.ts`. Row IDs are `Id<"tableName">` (opaque Convex IDs, not uuid).
 
-Mirrors Supabase Auth users. Auto-linked by `id`.
+### `users` (extends `authTables.users`)
 
-| Column       | Type      | Notes                    |
-| ------------ | --------- | ------------------------ |
-| `id`         | uuid (PK) | = Supabase auth user ID  |
-| `email`      | text      |                          |
-| `full_name`  | text      |                          |
-| `avatar_url` | text      | Path in `avatars` bucket |
-| `created_at` | timestamp |                          |
-| `updated_at` | timestamp |                          |
+Merged with the schema from `@convex-dev/auth/server`. Added fields:
+
+| Field             | Type              | Notes                                 |
+| ----------------- | ----------------- | ------------------------------------- |
+| `email`           | string?           | Lowercased; unique via `email` index. |
+| `name`            | string?           | Populated by Convex Auth.             |
+| `image`           | string?           | Not used by the app.                  |
+| `fullName`        | string?           | App-facing display name.              |
+| `avatarStorageId` | `Id<"_storage">`? | Convex file-storage ID for avatar.    |
+
+Indexes: `email`.
 
 ### `friendships`
 
-Bidirectional friend relationships with status lifecycle: pending -> accepted.
+Bidirectional friend relationships with status lifecycle: pending -> accepted. Each relationship is one row (the requester is `userId`, the recipient is `friendId`).
 
-| Column       | Type      | Notes                                    |
-| ------------ | --------- | ---------------------------------------- |
-| `id`         | uuid (PK) |                                          |
-| `user_id`    | uuid (FK) | Requester                                |
-| `friend_id`  | uuid (FK) | Recipient                                |
-| `status`     | text      | `"pending"` / `"accepted"` / `"blocked"` |
-| `created_at` | timestamp |                                          |
-| `updated_at` | timestamp |                                          |
+| Field      | Type                                   |
+| ---------- | -------------------------------------- |
+| `userId`   | `Id<"users">`                          |
+| `friendId` | `Id<"users">`                          |
+| `status`   | `"pending" \| "accepted" \| "blocked"` |
 
-### `user_connections`
+Indexes: `by_user`, `by_friend`, `by_user_and_friend`, `by_friend_and_user`, `by_user_and_status`, `by_friend_and_status`.
 
-Tracks which users have joined which train connections. Soft-delete via `left_at`.
+### `userConnections`
 
-| Column                     | Type      | Notes                                     |
-| -------------------------- | --------- | ----------------------------------------- |
-| `id`                       | uuid (PK) |                                           |
-| `user_id`                  | uuid      |                                           |
-| `connection_id`            | text      | Deterministic ID from EFA data            |
-| `trip_id`                  | text      | EFA stateless trip ID for friend matching |
-| `joined_at`                | timestamp |                                           |
-| `left_at`                  | timestamp | null = active, set = left                 |
-| `origin_station_id`        | text      |                                           |
-| `origin_station_name`      | text      |                                           |
-| `destination_station_id`   | text      |                                           |
-| `destination_station_name` | text      |                                           |
-| `departure_time`           | text      |                                           |
-| `arrival_time`             | text      |                                           |
-| `line_number`              | text      | e.g. "S1", "U6"                           |
-| `line_type`                | text      | e.g. "S-Bahn", "U-Bahn"                   |
-| `line_color`               | text      | Hex color                                 |
-| `line_direction`           | text      | Terminus station name                     |
+Tracks which users have joined which train connections. Soft-delete via `leftAt` (epoch ms, undefined = active).
 
-### `favorite_connections`
+| Field                    | Type          |
+| ------------------------ | ------------- |
+| `userId`                 | `Id<"users">` |
+| `connectionId`           | string        |
+| `tripId`                 | string? (EFA) |
+| `joinedAt`               | number (ms)   |
+| `leftAt`                 | number? (ms)  |
+| `originStationId`        | string?       |
+| `originStationName`      | string?       |
+| `destinationStationId`   | string?       |
+| `destinationStationName` | string?       |
+| `departureTime`          | string? (ISO) |
+| `arrivalTime`            | string? (ISO) |
+| `lineNumber`             | string?       |
+| `lineType`               | string?       |
+| `lineColor`              | string?       |
+| `lineDirection`          | string?       |
+
+Indexes: `by_user`, `by_user_and_connection`, `by_user_and_left`, `by_trip`.
+
+### `favoriteConnections`
 
 Saved origin-destination pairs for quick access.
 
-| Column                     | Type      | Notes                        |
-| -------------------------- | --------- | ---------------------------- |
-| `id`                       | uuid (PK) |                              |
-| `user_id`                  | uuid      |                              |
-| `origin_station_id`        | text      |                              |
-| `destination_station_id`   | text      |                              |
-| `origin_station_name`      | text      | Fetched from EFA on creation |
-| `destination_station_name` | text      | Fetched from EFA on creation |
-| `created_at`               | timestamp |                              |
+| Field                    | Type          |
+| ------------------------ | ------------- |
+| `userId`                 | `Id<"users">` |
+| `originStationId`        | string        |
+| `destinationStationId`   | string        |
+| `originStationName`      | string?       |
+| `destinationStationName` | string?       |
 
-### Supabase Storage
+Indexes: `by_user`, `by_user_and_route`.
 
-- **Bucket: `avatars`** -- profile pictures, path: `{userId}/{userId}-{timestamp}.{ext}`
+### File Storage
+
+- Avatars live in Convex file storage, referenced by `users.avatarStorageId`. The public URL is resolved server-side via `ctx.storage.getUrl()` inside `users.getCurrentUser` and related queries.
 
 ---
 
@@ -183,43 +195,83 @@ EFA responses are mapped in `packages/apis/vvs-efa/`:
 
 ---
 
-## API Endpoints
+## Convex Functions
+
+All function references are `api.<file>.<name>` (or `internal.<file>.<name>`) as generated in `convex/_generated/api.d.ts`.
+
+### Users (`convex/users.ts`)
+
+| Name                      | Kind     | Description                                                   |
+| ------------------------- | -------- | ------------------------------------------------------------- |
+| `getCurrentUser`          | query    | Returns the current user with resolved avatar URL, or `null`. |
+| `getById`                 | query    | Look up any user by `Id<"users">` (auth-required).            |
+| `updateProfile`           | mutation | Patch `fullName` on the current user.                         |
+| `generateAvatarUploadUrl` | mutation | Returns a one-time upload URL for Convex file storage.        |
+| `setAvatar`               | mutation | Attaches an uploaded `Id<"_storage">` to the current user.    |
+| `removeAvatar`            | mutation | Deletes the current avatar file and clears `avatarStorageId`. |
+| `findByEmail`             | query    | Lookup by email (used for friend search).                     |
+
+### Friendships (`convex/friendships.ts`)
+
+| Name             | Kind     | Description                                              |
+| ---------------- | -------- | -------------------------------------------------------- |
+| `list`           | query    | Accepted friends of the current user (with avatar URLs). |
+| `listRequests`   | query    | `{ received, sent }` pending friend requests.            |
+| `sendRequest`    | mutation | Send a friend request by email.                          |
+| `acceptRequest`  | mutation | Accept a pending request (must be the recipient).        |
+| `declineRequest` | mutation | Decline a pending request (deletes the row).             |
+| `remove`         | mutation | Remove an accepted friendship (either side can remove).  |
+
+### User connections (`convex/userConnections.ts`)
+
+| Name                  | Kind     | Description                                                                            |
+| --------------------- | -------- | -------------------------------------------------------------------------------------- |
+| `listMine`            | query    | Active connections for the current user + friends-on-trip data.                        |
+| `friendsOnTrips`      | query    | Given `tripIds[]`, returns `Record<tripId, Friend[]>`.                                 |
+| `friendsOnConnection` | query    | Given a connection + optional `tripId`, returns the current user's friends on it.      |
+| `join`                | mutation | Join a connection; stores denormalized metadata.                                       |
+| `leave`               | mutation | Soft-delete via `leftAt`.                                                              |
+| `cleanupPast`         | mutation | Soft-deletes the current user's active connections whose arrival/departure is in past. |
+
+### Favorites (`convex/favorites.ts`)
+
+| Name             | Kind             | Description                                                                   |
+| ---------------- | ---------------- | ----------------------------------------------------------------------------- |
+| `list`           | query            | Favorites for the current user, newest first.                                 |
+| `add`            | action           | Fetches station names from EFA, then inserts via `internal.favorites.insert`. |
+| `removeFavorite` | mutation         | Delete a favorite owned by the current user.                                  |
+| `findExisting`   | internalQuery    | Duplicate check used by `add`.                                                |
+| `insert`         | internalMutation | Raw insert used by `add`.                                                     |
+
+### Migration (`convex/migration.ts`)
+
+| Name                   | Kind             | Description                                                                                   |
+| ---------------------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| `importAll`            | action           | Public import entry point, guarded by `MIGRATION_SECRET` env var. Consumed by the Bun script. |
+| `upsertMigratedUser`   | internalMutation | Creates or email-matches a migrated user record.                                              |
+| `importAvatar`         | internalAction   | Downloads an avatar URL and attaches the resulting storage ID to a user.                      |
+| `attachAvatar`         | internalMutation | Patches `avatarStorageId` on a user.                                                          |
+| `upsertFriendship`     | internalMutation | Idempotent friendship import (checks both directions).                                        |
+| `upsertUserConnection` | internalMutation | Idempotent joined-connection import (keyed by `userId + connectionId`).                       |
+| `upsertFavorite`       | internalMutation | Idempotent favorite import (keyed by `userId + originStationId + destinationStationId`).      |
+
+---
+
+## Remaining HTTP API Endpoints
+
+Only EFA proxies remain -- all database operations moved to Convex.
 
 ### Connections
 
-| Route                           | Method      | Description                                                       |
-| ------------------------------- | ----------- | ----------------------------------------------------------------- |
-| `/api/connections/search`       | POST        | Search connections between two stations via EFA                   |
-| `/api/connections/me`           | GET         | Get current user's active (not left) connections with friend data |
-| `/api/connections/friends`      | POST        | Given `{ tripIds }`, returns friends on each physical train       |
-| `/api/connections/[id]/friends` | GET         | Friends on a specific connection (by tripId or connection_id)     |
-| `/api/connections/[id]/join`    | POST        | Join a connection (stores denormalized metadata)                  |
-| `/api/connections/[id]/leave`   | POST/DELETE | Leave a connection (soft delete via `left_at`)                    |
+| Route                     | Method | Description                                      |
+| ------------------------- | ------ | ------------------------------------------------ |
+| `/api/connections/search` | POST   | Search connections between two stations via EFA. |
 
 ### Stations
 
 | Route           | Method | Description                                                     |
 | --------------- | ------ | --------------------------------------------------------------- |
 | `/api/stations` | GET    | Station search. `?q=` for name, `?trainOnly=true` for rail only |
-
-### Friends
-
-| Route                       | Method | Description                             |
-| --------------------------- | ------ | --------------------------------------- |
-| `/api/friends`              | GET    | List accepted friends                   |
-| `/api/friends/request`      | POST   | Send friend request by email            |
-| `/api/friends/requests`     | GET    | List pending requests (sent + received) |
-| `/api/friends/[id]`         | DELETE | Remove a friendship                     |
-| `/api/friends/[id]/accept`  | POST   | Accept a friend request                 |
-| `/api/friends/[id]/decline` | POST   | Decline a friend request                |
-
-### Favorites
-
-| Route                 | Method | Description                                        |
-| --------------------- | ------ | -------------------------------------------------- |
-| `/api/favorites`      | GET    | List user's favorite routes                        |
-| `/api/favorites`      | POST   | Add favorite (auto-fetches station names from EFA) |
-| `/api/favorites/[id]` | DELETE | Remove a favorite                                  |
 
 ### VVS Departures
 
@@ -230,107 +282,97 @@ EFA responses are mapped in `packages/apis/vvs-efa/`:
 
 ---
 
-## Server Actions
-
-| Action           | File                     | Description                                           |
-| ---------------- | ------------------------ | ----------------------------------------------------- |
-| `signIn`         | `app/actions/auth.ts`    | Email/password sign-in via Supabase Auth              |
-| `signUp`         | `app/actions/auth.ts`    | Registration with email, password, full name          |
-| `signOut`        | `app/actions/auth.ts`    | Sign out and revalidate layout                        |
-| `updateEmail`    | `app/actions/profile.ts` | Update user email                                     |
-| `updatePassword` | `app/actions/profile.ts` | Update password (validates min 6 chars + confirm)     |
-| `updateProfile`  | `app/actions/profile.ts` | Update full_name + avatar_url (auth + profiles table) |
-
----
-
 ## Hooks
 
 ### Global (`packages/apis/hooks/`)
 
-| Hook           | Purpose                                                  | Returns             |
-| -------------- | -------------------------------------------------------- | ------------------- |
-| `useSession()` | Reactive Supabase auth session, listens to state changes | `{ user, loading }` |
+| Hook           | Purpose                                                   | Returns                              |
+| -------------- | --------------------------------------------------------- | ------------------------------------ |
+| `useSession()` | Reactive Convex auth state + current-user document merge. | `{ user, loading, isAuthenticated }` |
 
 ### App-level (`app/hooks/`)
 
-| Hook                 | Purpose                                   | Returns                                  |
-| -------------------- | ----------------------------------------- | ---------------------------------------- |
-| `useMyConnections()` | Fetches user's active connections via SWR | `{ connectionIds, connections, mutate }` |
+| Hook                 | Purpose                                        | Returns                          |
+| -------------------- | ---------------------------------------------- | -------------------------------- |
+| `useMyConnections()` | Wrapper around `api.userConnections.listMine`. | `{ connectionIds, connections }` |
 
 ### Connections page (`app/connections/hooks/`)
 
-| Hook                       | Purpose                                                                 |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `useConnectionsPage()`     | Main orchestrator: composes search, favorites, join state, friends data |
-| `useConnectionsSearch()`   | SWR connection search with "load earlier" / "load later" pagination     |
-| `useFavorites()`           | Favorites CRUD with optimistic updates                                  |
-| `useRouteFavoriteToggle()` | Convenience wrapper for route-level favorite toggle                     |
-| `useJoinedConnectionIds()` | Returns IDs of connections the current user has joined                  |
+| Hook                       | Purpose                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `useConnectionsPage()`     | Composes EFA search, Convex favorites, joined-ID set, `friendsOnTrips` query. |
+| `useConnectionsSearch()`   | SWR connection search with "load earlier" / "load later" pagination (EFA).    |
+| `useFavorites()`           | Convex-backed favorites read + `add` action / `removeFavorite` mutation.      |
+| `useRouteFavoriteToggle()` | Convenience wrapper for route-level favorite toggle.                          |
+| `useJoinedConnectionIds()` | Shortcut over `useMyConnections().connectionIds`.                             |
 
 ---
 
 ## Authentication Flow
 
-1. **Sign-up:** `/auth/signup` -> `signUp` server action -> `supabase.auth.signUp()` -> redirect to `/`
-2. **Sign-in:** `/auth/signin` -> `signIn` server action -> `supabase.auth.signInWithPassword()` -> full page nav to `/`
-3. **Sign-out:** UserMenu -> `signOut` server action -> `supabase.auth.signOut()` -> redirect to `/auth/signin`
-4. **Session:** `useSession()` hook provides reactive auth state. localStorage backup for session resilience.
-5. **Protection:** Server components check auth via `getUser()` and redirect. Client pages use `useSession()`. API routes return 401.
+1. **Sign-up:** `/auth/signup` -> `useAuthActions().signIn("password", { flow: "signUp", email, password, fullName })` -> Password provider stores hash in `authAccounts`, `createOrUpdateUser` callback creates the `users` row (or merges with a migrated record).
+2. **Sign-in:** `/auth/signin` -> `useAuthActions().signIn("password", { flow: "signIn", email, password })` -> sets auth cookies -> full-page nav to `/`.
+3. **Sign-out:** UserMenu -> `useAuthActions().signOut()` -> redirect to `/auth/signin`.
+4. **Session:** `useSession()` reads `useConvexAuth()` + `api.users.getCurrentUser`. The `middleware.ts` file redirects unauthenticated users away from protected routes and signed-in users away from `/auth/*`.
+5. **Server-side auth:** `isAuthenticatedNextjs()` from `@convex-dev/auth/nextjs/server` gates Server Components; `convexAuthNextjsToken()` is called to keep rendered pages user-scoped.
 
-### Supabase Clients
+### Migration merging
 
-- **`createServerSupabaseClient()`** -- cookie-based, respects RLS, used in server components and API routes for user-scoped queries
-- **`createServiceRoleClient()`** -- bypasses RLS, used for cross-user queries (e.g., finding friends on a connection)
-- **`createBrowserClient()`** -- client-side, used in `useSession()` hook
+`convexAuth()` in `convex/auth.ts` ships a `callbacks.createOrUpdateUser` that looks up existing users by email before creating a new row. This lets the Supabase -> Convex migration seed `users` rows without authAccounts; the first sign-up with a matching email adopts the existing `_id`, preserving friendships/joined-connection links.
 
 ---
 
 ## Data Fetching Patterns
 
-| Pattern                | Where Used                                             | Details                                          |
-| ---------------------- | ------------------------------------------------------ | ------------------------------------------------ |
-| **SWR**                | All client-side data (connections, friends, favorites) | `fetcher<T>` (GET), `postFetcher<T,B>` (POST)    |
-| **Optimistic updates** | Favorites toggle                                       | `mutate(optimisticData, { revalidate: false })`  |
-| **SWR Suspense**       | FavoriteConnectionsContent                             | `{ suspense: true }` with Suspense boundary      |
-| **`"use cache"`**      | VVS departure API routes                               | `cacheLife({ revalidate: 30 })` (30s)            |
-| **sessionStorage**     | Connection detail page                                 | Caches Connection objects for instant loads      |
-| **unstable_cache**     | Supabase friend queries                                | 2min (friends list), 30s (friends on connection) |
+| Pattern                       | Where Used                                           | Details                                        |
+| ----------------------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| **`useQuery` (Convex)**       | Friends, favorites, joined connections, current user | Reactive, auto-revalidating subscriptions.     |
+| **`useMutation`/`useAction`** | All writes + external-fetch actions                  | Direct calls; no SWR layer for DB ops.         |
+| **SWR**                       | EFA connection search and detail pages only          | `fetcher<T>` (GET), `postFetcher<T,B>` (POST). |
+| **SWR Suspense**              | FavoriteConnectionsContent                           | `{ suspense: true }` with Suspense boundary.   |
+| **`"use cache"`**             | VVS departure API routes                             | `cacheLife({ revalidate: 30 })` (30s).         |
+| **sessionStorage**            | Connection detail page                               | Caches Connection objects for instant loads.   |
 
 ---
 
 ## Key Design Decisions
 
-- **No stored timetable data.** All connection info is fetched live from VVS EFA. `user_connections` stores denormalized metadata only for display purposes.
-- **Friend matching by `trip_id`**, not `connection_id`. Two friends boarding the same physical train at different stations have different `connection_id`s but the same `trip_id`. The `FriendOnConnection` type extends `Friend` with the friend's boarding/alighting station names and times, so the UI can display which segment the friend shares.
-- **Soft delete for leaving connections.** `left_at` timestamp is set instead of deleting the row.
-- **Auto-cleanup of past connections.** When `GET /api/connections/me` is called, any active connection whose `arrival_time` (or `departure_time` as fallback) is in the past is automatically soft-deleted (`left_at` is set) and excluded from the response.
+- **No stored timetable data.** All connection info is fetched live from VVS EFA. `userConnections` stores denormalized metadata only for display purposes.
+- **Friend matching by `tripId`**, not `connectionId`. Two friends boarding the same physical train at different stations have different `connectionId`s but the same `tripId`.
+- **Soft delete for leaving connections.** `leftAt` timestamp (epoch ms) is set instead of deleting the row.
+- **Past-connection cleanup.** A `cleanupPast` mutation the client can call opportunistically sets `leftAt` on active rows whose arrival/departure time is in the past.
 - **Atomic Design for components.** Strict atoms/molecules/organisms hierarchy in `packages/ui/`.
 - **SCSS Modules per component.** Each component has its own `.module.scss` file in its directory.
 - **React Compiler enabled.** No manual `useMemo`/`useCallback` needed (compiler handles memoization).
+- **Password resets & email changes are not yet wired up.** The Convex Auth Password provider supports email-based reset flows but requires an outbound email provider -- out of scope for the initial migration. Profile UI only exposes avatar + full-name edits.
 
 ---
 
 ## Environment Variables
 
-| Variable                        | Public | Purpose                                  |
-| ------------------------------- | ------ | ---------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Yes    | Supabase project URL                     |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes    | Supabase anonymous key                   |
-| `SUPABASE_SERVICE_ROLE_KEY`     | No     | Supabase service role key (bypasses RLS) |
-| `SUPABASE_PROJECT_ID`           | No     | Used by `gen-types.ts` script            |
+| Variable                    | Public | Where set    | Purpose                                           |
+| --------------------------- | ------ | ------------ | ------------------------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`    | Yes    | `.env.local` | Convex deployment URL used by the browser client. |
+| `CONVEX_DEPLOYMENT`         | No     | `.env.local` | Convex deployment selector for the CLI.           |
+| `SITE_URL`                  | No     | Convex env   | Configured by `@convex-dev/auth` setup.           |
+| `JWT_PRIVATE_KEY`           | No     | Convex env   | Signs Convex Auth JWTs. Rotated via the CLI.      |
+| `JWKS`                      | No     | Convex env   | Public JWKS for Convex Auth token verification.   |
+| `MIGRATION_SECRET`          | No     | Convex env   | Shared secret gating the `importAll` action.      |
+| `NEXT_PUBLIC_SUPABASE_URL`  | Yes    | `.env.local` | **Only** used by the one-off migration script.    |
+| `SUPABASE_SERVICE_ROLE_KEY` | No     | `.env.local` | **Only** used by the one-off migration script.    |
 
 ---
 
 ## Scripts
 
-| Command             | Description                                                              |
-| ------------------- | ------------------------------------------------------------------------ |
-| `bun run dev`       | Start Next.js dev server                                                 |
-| `bun run build`     | Production build                                                         |
-| `bun run start`     | Start production server                                                  |
-| `bun run lint`      | Run ESLint                                                               |
-| `bun run format`    | Run Prettier + ESLint auto-fix                                           |
-| `bun run gen:types` | Generate Supabase DB types -> `packages/apis/supabase/database.types.ts` |
+| Command                    | Description                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| `bun run dev`              | Start Next.js dev server. Run `npx convex dev` separately to watch Convex.     |
+| `bun run build`            | Production build.                                                              |
+| `bun run start`            | Start production server.                                                       |
+| `bun run lint`             | Run ESLint.                                                                    |
+| `bun run format`           | Run Prettier + ESLint auto-fix.                                                |
+| `bun run migrate:supabase` | One-off Supabase -> Convex migration (see `scripts/migrate-from-supabase.ts`). |
 
 ---
 

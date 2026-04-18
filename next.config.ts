@@ -13,9 +13,9 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: "https",
-                hostname: "*.supabase.co",
+                hostname: "*.convex.cloud",
                 port: "",
-                pathname: "/storage/v1/object/public/**",
+                pathname: "/api/storage/**",
             },
         ],
     },
